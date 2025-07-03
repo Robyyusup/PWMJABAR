@@ -322,7 +322,11 @@
         const loadingOverlay = document.getElementById('loadingOverlay');
         const messageBoxContainer = document.getElementById('messageBoxContainer');
 
-        let selectedCandidates = [];
+        // Store candidates data globally once loaded
+        let allCandidatesData = {};
+
+        // Use a Set to ensure unique candidate IDs are stored
+        let selectedCandidateIds = new Set();
         let currentVoter = null;
         let chartInstance = null;
 
@@ -444,6 +448,9 @@
                     });
                     await candidatesRef.update(updates);
                     console.log("Candidates data initialized.");
+                } else {
+                    // Load candidates into allCandidatesData if they already exist
+                    allCandidatesData = candidatesSnapshot.val();
                 }
 
                 // Set total voters count
@@ -533,11 +540,11 @@
             showLoading();
             try {
                 const snapshot = await candidatesRef.once('value');
-                const candidatesData = snapshot.val();
+                allCandidatesData = snapshot.val(); // Store all candidates data
                 candidatesList.innerHTML = ''; // Clear existing list
-                if (candidatesData) {
-                    Object.keys(candidatesData).forEach(candidateId => {
-                        const candidate = candidatesData[candidateId];
+                if (allCandidatesData) {
+                    Object.keys(allCandidatesData).forEach(candidateId => {
+                        const candidate = allCandidatesData[candidateId];
                         const card = document.createElement('div');
                         card.className = 'card-candidate rounded-lg p-4 bg-gray-50 hover:bg-gray-100 flex items-center space-x-3 transition-all duration-200';
                         card.innerHTML = `
@@ -548,7 +555,7 @@
 
                         const checkbox = card.querySelector(`#candidate-${candidateId}`);
                         checkbox.addEventListener('change', (event) => {
-                            handleCandidateSelection(event.target, candidate.name);
+                            handleCandidateSelection(event.target.value, event.target.checked);
                         });
                         card.addEventListener('click', () => {
                             checkbox.checked = !checkbox.checked;
@@ -567,20 +574,20 @@
             }
         }
 
-        function handleCandidateSelection(checkbox, candidateName) {
-            const candidateId = checkbox.value;
-            const card = checkbox.closest('.card-candidate');
+        function handleCandidateSelection(candidateId, isChecked) {
+            const card = document.querySelector(`input[value="${candidateId}"]`).closest('.card-candidate');
 
-            if (checkbox.checked) {
-                if (selectedCandidates.length < 4) {
-                    selectedCandidates.push({ id: candidateId, name: candidateName });
+            if (isChecked) {
+                if (selectedCandidateIds.size < 4) {
+                    selectedCandidateIds.add(candidateId);
                     card.classList.add('selected');
                 } else {
-                    checkbox.checked = false; // Prevent selection if already 4
+                    // If already 4, uncheck the box and notify
+                    document.querySelector(`input[value="${candidateId}"]`).checked = false;
                     showMessageBox('Peringatan', 'Anda hanya dapat memilih maksimal 4 calon wakasek.', 'warning');
                 }
             } else {
-                selectedCandidates = selectedCandidates.filter(c => c.id !== candidateId);
+                selectedCandidateIds.delete(candidateId);
                 card.classList.remove('selected');
             }
             updateSelectionReview();
@@ -588,18 +595,19 @@
 
         function updateSelectionReview() {
             selectedCandidatesReview.innerHTML = '';
-            if (selectedCandidates.length === 0) {
+            if (selectedCandidateIds.size === 0) {
                 selectedCandidatesReview.innerHTML = '<li>Belum ada kandidat yang dipilih.</li>';
             } else {
-                selectedCandidates.forEach(c => {
+                // Iterate through the Set of selected IDs and get names from allCandidatesData
+                selectedCandidateIds.forEach(id => {
                     const li = document.createElement('li');
-                    li.textContent = c.name;
+                    li.textContent = allCandidatesData[id] ? allCandidatesData[id].name : 'Kandidat Tidak Dikenal';
                     selectedCandidatesReview.appendChild(li);
                 });
             }
-            selectionCountDisplay.textContent = `Anda telah memilih ${selectedCandidates.length} dari 4 kandidat.`;
+            selectionCountDisplay.textContent = `Anda telah memilih ${selectedCandidateIds.size} dari 4 kandidat.`;
 
-            if (selectedCandidates.length === 4) {
+            if (selectedCandidateIds.size === 4) {
                 selectionCountDisplay.classList.remove('text-red-600');
                 selectionCountDisplay.classList.add('text-green-600');
                 votingMessage.textContent = '';
@@ -611,7 +619,7 @@
         }
 
         submitVoteBtn.addEventListener('click', async () => {
-            if (selectedCandidates.length !== 4) {
+            if (selectedCandidateIds.size !== 4) {
                 showMessageBox('Peringatan', 'Anda harus memilih tepat 4 calon wakasek sebelum mengirim suara.', 'warning');
                 return;
             }
@@ -633,26 +641,30 @@
                     return;
                 }
 
+                // Convert Set to Array for Firebase storage
+                const choicesArray = Array.from(selectedCandidateIds);
+
                 // Store individual vote
                 const voteId = `${Date.now()}-${currentVoter.token}`;
                 await votesRef.child(voteId).set({
                     voterName: currentVoter.name,
                     voterToken: currentVoter.token,
                     timestamp: new Date().toISOString(),
-                    choices: selectedCandidates.map(c => c.id)
+                    choices: choicesArray
                 });
 
                 // Update candidate vote counts
                 const updates = {};
-                for (const candidate of selectedCandidates) {
-                    updates[`${candidate.id}/votes`] = firebase.database.ServerValue.increment(1);
+                for (const candidateId of choicesArray) {
+                    updates[`${candidateId}/votes`] = firebase.database.ServerValue.increment(1);
                 }
                 await candidatesRef.update(updates);
 
                 // Update voter's votedFor array (for admin tracking)
-                // This is done after the vote is officially recorded
+                // Store names for easier admin view
+                const votedForNames = choicesArray.map(id => allCandidatesData[id] ? allCandidatesData[id].name : 'Unknown Candidate');
                 await votersRef.child(currentVoter.token).update({
-                    votedFor: selectedCandidates.map(c => c.name) // Store names for easier admin view
+                    votedFor: votedForNames
                 });
 
                 showMessageBox('Berhasil!', 'Suara Anda telah berhasil dicatat. Terima kasih atas partisipasi Anda!', 'info', () => {
@@ -673,6 +685,7 @@
         async function renderResultsChart() {
             showLoading();
             try {
+                // Fetch latest candidate data to ensure chart is up-to-date
                 const snapshot = await candidatesRef.once('value');
                 const candidatesData = snapshot.val();
 
