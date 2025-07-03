@@ -169,6 +169,57 @@
             background-color: rgba(0, 0, 0, 0.5);
             z-index: 999;
         }
+
+        /* Floating Chart Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 900; /* Below message box */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            width: 90%;
+            max-width: 700px;
+            transform: translateY(-50px);
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            position: relative;
+        }
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            color: #666;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+        .modal-close-btn:hover {
+            color: #333;
+        }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-5">
@@ -219,16 +270,19 @@
             </button>
         </div>
 
-        <!-- Post-Vote Chart Section (Initially Hidden) -->
-        <div id="postVoteChartSection" class="hidden p-6 bg-white rounded-lg shadow-md fade-in">
-            <h2 class="text-2xl font-semibold mb-4 text-gray-800 text-center">Terima Kasih! Suara Anda Telah Tercatat.</h2>
-            <p class="text-center text-gray-600 mb-6">Berikut adalah hasil sementara pemilihan:</p>
-            <div class="w-full h-80">
-                <canvas id="resultsChart"></canvas>
+        <!-- Post-Vote Chart Modal (Initially Hidden) -->
+        <div id="postVoteChartModal" class="modal-overlay">
+            <div class="modal-content">
+                <button id="closeChartModalBtn" class="modal-close-btn">&times;</button>
+                <h2 class="text-2xl font-semibold mb-4 text-gray-800 text-center">Terima Kasih! Suara Anda Telah Tercatat.</h2>
+                <p class="text-center text-gray-600 mb-6">Berikut adalah hasil sementara pemilihan:</p>
+                <div class="w-full h-80">
+                    <canvas id="resultsChart"></canvas>
+                </div>
+                <p class="text-center text-gray-500 text-sm mt-6">
+                    Untuk melihat hasil real-time yang diperbarui secara otomatis, kunjungi halaman <a href="panelchart.html" class="text-blue-600 hover:underline">Panel Chart Publik</a>.
+                </p>
             </div>
-            <p class="text-center text-gray-500 text-sm mt-6">
-                Untuk melihat hasil real-time yang diperbarui secara otomatis, kunjungi halaman <a href="panelchart.html" class="text-blue-600 hover:underline">Panel Chart Publik</a>.
-            </p>
         </div>
     </div>
 
@@ -255,7 +309,8 @@
         // DOM Elements
         const loginSection = document.getElementById('loginSection');
         const votingSection = document.getElementById('votingSection');
-        const postVoteChartSection = document.getElementById('postVoteChartSection');
+        const postVoteChartModal = document.getElementById('postVoteChartModal'); // Changed to modal
+        const closeChartModalBtn = document.getElementById('closeChartModalBtn'); // New close button
         const loginMessage = document.getElementById('loginMessage');
         const voterNameDisplay = document.getElementById('voterNameDisplay');
         const candidatesList = document.getElementById('candidatesList');
@@ -443,6 +498,7 @@
                         voterNameDisplay.textContent = currentVoter.name;
 
                         // Mark token as used immediately (optimistic update)
+                        // This is crucial for preventing double votes even if the user refreshes
                         await votersRef.child(token).update({ used: true });
 
                         loginSection.classList.add('hidden');
@@ -451,19 +507,22 @@
                         await loadCandidatesForVoting();
                     } else {
                         loginMessage.textContent = 'Token ini sudah digunakan. Anda sudah memberikan suara.';
-                        showMessageBox('Token Digunakan', 'Token ini sudah digunakan. Anda sudah memberikan suara.', 'error');
-                        startQrScanner(); // Restart scanner for next attempt
+                        showMessageBox('Token Digunakan', 'Token ini sudah digunakan. Anda sudah memberikan suara.', 'error', () => {
+                            startQrScanner(); // Restart scanner for next attempt
+                        });
                     }
                 } else {
                     loginMessage.textContent = 'Token tidak valid. Mohon coba lagi.';
-                    showMessageBox('Token Tidak Valid', 'Token yang Anda pindai tidak terdaftar. Mohon periksa kembali.', 'error');
-                    startQrScanner(); // Restart scanner for next attempt
+                    showMessageBox('Token Tidak Valid', 'Token yang Anda pindai tidak terdaftar. Mohon periksa kembali.', 'error', () => {
+                        startQrScanner(); // Restart scanner for next attempt
+                    });
                 }
             } catch (error) {
                 console.error("Login error:", error);
                 loginMessage.textContent = 'Terjadi kesalahan saat login. Mohon coba lagi.';
-                showMessageBox('Kesalahan Login', 'Terjadi kesalahan saat mencoba masuk. Silakan coba lagi.', 'error');
-                startQrScanner(); // Restart scanner for next attempt
+                showMessageBox('Kesalahan Login', 'Terjadi kesalahan saat mencoba masuk. Silakan coba lagi.', 'error', () => {
+                    startQrScanner(); // Restart scanner for next attempt
+                });
             } finally {
                 hideLoading();
             }
@@ -591,15 +650,15 @@
                 await candidatesRef.update(updates);
 
                 // Update voter's votedFor array (for admin tracking)
+                // This is done after the vote is officially recorded
                 await votersRef.child(currentVoter.token).update({
                     votedFor: selectedCandidates.map(c => c.name) // Store names for easier admin view
                 });
 
                 showMessageBox('Berhasil!', 'Suara Anda telah berhasil dicatat. Terima kasih atas partisipasi Anda!', 'info', () => {
-                    votingSection.classList.add('hidden');
-                    postVoteChartSection.classList.remove('hidden');
-                    postVoteChartSection.classList.add('fade-in');
-                    renderResultsChart();
+                    votingSection.classList.add('hidden'); // Hide voting section
+                    postVoteChartModal.classList.add('active'); // Show the modal
+                    renderResultsChart(); // Render chart inside the modal
                 });
 
             } catch (error) {
@@ -610,7 +669,7 @@
             }
         });
 
-        // --- Post-Vote Chart Logic ---
+        // --- Post-Vote Chart Logic (now in a modal) ---
         async function renderResultsChart() {
             showLoading();
             try {
@@ -713,6 +772,13 @@
                 hideLoading();
             }
         }
+
+        // Close chart modal
+        closeChartModalBtn.addEventListener('click', () => {
+            postVoteChartModal.classList.remove('active');
+            // Optionally, redirect or reset the page for a new voter
+            window.location.reload(); // Reloads the page to go back to QR scan
+        });
     </script>
 </body>
 </html>
