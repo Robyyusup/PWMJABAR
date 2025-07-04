@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Chart Publik E-Voting</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #064e3b 100%);
+            min-height: 100vh;
+            color: #1a202c;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+        
+        .header-gradient {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            color: white;
+            padding: 32px;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 32px;
+            box-shadow: 0 8px 32px rgba(30, 41, 59, 0.3);
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #1e3a8a 0%, #064e3b 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(30, 58, 138, 0.3);
+            transform: translateY(0);
+            transition: all 0.3s ease;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(30, 58, 138, 0.4);
+        }
+        
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stats-label {
+            font-size: 1rem;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+        
+        .chart-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .chart-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 24px;
+            color: #1e293b;
+        }
+        
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 24px;
+            padding: 12px 24px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 12px;
+            color: #059669;
+            font-weight: 600;
+        }
+        
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-left-color: #1e3a8a;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .loading-content {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(30, 58, 138, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 16px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #1e3a8a, #064e3b);
+            border-radius: 2px;
+            animation: progress 2s ease-in-out infinite;
+        }
+        
+        @keyframes progress {
+            0% { width: 0%; }
+            50% { width: 70%; }
+            100% { width: 100%; }
+        }
+        
+        .update-time {
+            text-align: center;
+            color: #6b7280;
+            font-size: 0.875rem;
+            margin-top: 16px;
+            padding: 8px 16px;
+            background: rgba(107, 114, 128, 0.1);
+            border-radius: 8px;
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 600px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px;
+            }
+            
+            .header-gradient {
+                padding: 24px 16px;
+            }
+            
+            .chart-container {
+                padding: 24px 16px;
+            }
+            
+            .chart-wrapper {
+                height: 500px;
+            }
+            
+            .stats-number {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header-gradient fade-in">
+            <h1 class="text-3xl font-bold mb-2">Panel Chart Publik E-Voting</h1>
+            <p class="text-lg opacity-90">Pimpinan Wilayah Muhammadiyah Jawa Barat</p>
+            <div class="live-indicator mt-4">
+                <div class="live-dot"></div>
+                <span>LIVE - Data Real-time</span>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay hidden">
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <div>
+                    <p class="text-lg font-medium text-gray-700">Memuat data terbaru...</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats-container fade-in">
+            <div class="stats-card">
+                <div class="stats-number" id="totalVoters">0</div>
+                <div class="stats-label"> Total Pemilih</div>
+            </div>
+            <div class="stats-card">
+                <div class="stats-number" id="votedCount">0</div>
+                <div class="stats-label"> Sudah Memilih</div>
+            </div>
+            <div class="stats-card">
+                <div class="stats-number" id="participationRate">0%</div>
+                <div class="stats-label"> Tingkat Partisipasi</div>
+            </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="chart-container fade-in">
+            <h2 class="chart-title"> Hasil Klasemen Pemilihan Wakasek</h2>
+            <div class="chart-wrapper">
+                <canvas id="resultsChart"></canvas>
+            </div>
+            <div class="update-time" id="lastUpdate">
+                Terakhir diperbarui: -
+            </div>
+        </div>
+
+        <!-- Footer Info -->
+        <div class="text-center mt-8 fade-in">
+            <div class="glass-effect rounded-2xl p-6">
+                <p class="text-gray-600 mb-2">
+                     Data diperbarui otomatis setiap 5 detik
+                </p>
+                <p class="text-sm text-gray-500">
+                    Sistem E-Voting Real-time - Transparan & Akurat
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBp5tqBOYzxbmf70pmUs7FyQBhl0Tbg0XY",
+            authDomain: "pemilihan-wakasek-muhika.firebaseapp.com",
+            databaseURL: "https://pemilihan-wakasek-muhika-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "pemilihan-wakasek-muhika",
+            storageBucket: "pemilihan-wakasek-muhika.firebasestorage.app",
+            messagingSenderId: "1094339172947",
+            appId: "1:1094339172947:web:0ca57c112d7afc6879c4a6"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Global variables
+        let chartInstance = null;
+        let updateInterval = null;
+
+        // DOM Elements
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const totalVotersEl = document.getElementById('totalVoters');
+        const votedCountEl = document.getElementById('votedCount');
+        const participationRateEl = document.getElementById('participationRate');
+        const resultsChartEl = document.getElementById('resultsChart');
+        const lastUpdateEl = document.getElementById('lastUpdate');
+
+        // Utility Functions
+        function showLoading() {
+            loadingOverlay.classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            loadingOverlay.classList.add('hidden');
+        }
+
+        function updateLastUpdateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleString('id-ID', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            lastUpdateEl.textContent = `Terakhir diperbarui: ${timeString}`;
+        }
+
+        function animateNumber(element, targetValue, duration = 1000) {
+            const startValue = parseInt(element.textContent) || 0;
+            const difference = targetValue - startValue;
+            const startTime = performance.now();
+
+            function updateNumber(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+                const currentValue = Math.round(startValue + (difference * easeOutQuart));
+                
+                element.textContent = currentValue;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(updateNumber);
+                }
+            }
+            
+            requestAnimationFrame(updateNumber);
+        }
+
+        // Chart update function
+        function updateChart(candidates) {
+            const sortedCandidates = Object.values(candidates).sort((a, b) => b.votes - a.votes);
+            
+            // Enhanced color palette with dark blue and dark green theme
+            const colors = [
+                'rgba(30, 58, 138, 0.9)',   // Dark Blue
+                'rgba(6, 78, 59, 0.9)',     // Dark Green
+                'rgba(245, 158, 11, 0.9)',  // Amber
+                'rgba(239, 68, 68, 0.9)',   // Red
+                'rgba(139, 92, 246, 0.9)',  // Violet
+                'rgba(236, 72, 153, 0.9)',  // Pink
+                'rgba(14, 165, 233, 0.9)',  // Sky
+                'rgba(34, 197, 94, 0.9)',   // Green
+                'rgba(168, 85, 247, 0.9)',  // Purple
+                'rgba(251, 146, 60, 0.9)',  // Orange
+            ];
+
+            const data = {
+                labels: sortedCandidates.map(candidate => candidate.name),
+                datasets: [{
+                    label: 'Jumlah Suara',
+                    data: sortedCandidates.map(candidate => candidate.votes),
+                    backgroundColor: colors.slice(0, sortedCandidates.length),
+                    borderColor: colors.slice(0, sortedCandidates.length).map(color => color.replace('0.9', '1')),
+                    borderWidth: 3,
+                    borderRadius: 12,
+                    borderSkipped: false,
+                }]
+            };
+
+            const options = {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    legend: { display: false },
+                    title: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                        titleColor: 'white',
+                        bodyColor: 'white',
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        borderWidth: 1,
+                        cornerRadius: 12,
+                        displayColors: false,
+                        titleFont: { size: 14, weight: 'bold' },
+                        bodyFont: { size: 13 },
+                        padding: 12,
+                        callbacks: {
+                            title: function(context) {
+                                return context[0].label;
+                            },
+                            label: function(context) {
+                                return `Suara: ${context.parsed.x}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Jumlah Suara',
+                            font: { size: 14, weight: 'bold' },
+                            color: '#374151'
+                        },
+                        ticks: {
+                            stepSize: 1,
+                            color: '#6b7280',
+                            font: { size: 12 }
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.08)',
+                            lineWidth: 1
+                        }
+                    },
+                    y: {
+                        ticks: {
+                            color: '#374151',
+                            font: { size: 13, weight: '600' },
+                            maxRotation: 0,
+                            padding: 10
+                        },
+                        grid: { display: false }
+                    }
+                },
+                animation: {
+                    duration: 1500,
+                    easing: 'easeInOutQuart'
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            };
+
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+            chartInstance = new Chart(resultsChartEl, { type: 'bar', data, options });
+        }
+
+        // Main data update function
+        async function updateData() {
+            try {
+                showLoading();
+
+                // Get all data from Firebase
+                const [votersSnapshot, candidatesSnapshot, totalVotersSnapshot] = await Promise.all([
+                    firebase.database().ref('voters').once('value'),
+                    firebase.database().ref('candidates').once('value'),
+                    firebase.database().ref('totalVotersCount').once('value')
+                ]);
+
+                const voters = votersSnapshot.val() || {};
+                const candidates = candidatesSnapshot.val() || {};
+                const totalVoters = totalVotersSnapshot.val() || 0;
+
+                // Calculate statistics
+                const votedCount = Object.values(voters).filter(voter => voter.used).length;
+                const participationRate = totalVoters > 0 ? Math.round((votedCount / totalVoters) * 100) : 0;
+
+                // Update statistics with animation
+                animateNumber(totalVotersEl, totalVoters);
+                animateNumber(votedCountEl, votedCount);
+                
+                // Animate percentage
+                const currentRate = parseInt(participationRateEl.textContent) || 0;
+                const rateDifference = participationRate - currentRate;
+                let currentRateValue = currentRate;
+                const rateInterval = setInterval(() => {
+                    if (rateDifference > 0 && currentRateValue < participationRate) {
+                        currentRateValue++;
+                        participationRateEl.textContent = currentRateValue + '%';
+                    } else if (rateDifference < 0 && currentRateValue > participationRate) {
+                        currentRateValue--;
+                        participationRateEl.textContent = currentRateValue + '%';
+                    } else {
+                        clearInterval(rateInterval);
+                    }
+                }, 50);
+
+                // Update chart
+                updateChart(candidates);
+
+                // Update last update time
+                updateLastUpdateTime();
+
+                hideLoading();
+            } catch (error) {
+                console.error('Error updating data:', error);
+                hideLoading();
+                
+                // Show error message
+                const errorEl = document.createElement('div');
+                errorEl.className = 'fixed top-4 right-4 bg-red-500 text-white p-4 rounded-lg shadow-lg z-50';
+                errorEl.textContent = 'Gagal memuat data. Mencoba lagi...';
+                document.body.appendChild(errorEl);
+                
+                setTimeout(() => errorEl.remove(), 3000);
+            }
+        }
+
+        // Start auto-update
+        function startAutoUpdate() {
+            updateData(); // Initial load
+            updateInterval = setInterval(updateData, 5000); // Update every 5 seconds
+        }
+
+        // Disable developer tools
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('keydown', e => {
+            if (e.key === 'F12' || 
+                (e.ctrlKey && e.shiftKey && e.key === 'I') ||
+                (e.ctrlKey && e.shiftKey && e.key === 'J') ||
+                (e.ctrlKey && e.key === 'U')) {
+                e.preventDefault();
+            }
+        });
+
+        // Handle page visibility change
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                if (updateInterval) {
+                    clearInterval(updateInterval);
+                }
+            } else {
+                startAutoUpdate();
+            }
+        });
+
+        // Initialize
+        window.addEventListener('load', () => {
+            hideLoading();
+            startAutoUpdate();
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (chartInstance) {
+                chartInstance.resize();
+            }
+        });
+    </script>
+</body>
+</html>
