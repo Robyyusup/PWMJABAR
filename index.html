@@ -4,284 +4,425 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>E-Voting Pemilihan Wakasek</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- html5-qrcode CDN -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <style>
-        /* Custom CSS for theme and animations */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f0f4f8; /* Light gray background */
-            color: #333;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
         }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #064e3b 100%);
+            min-height: 100vh;
+            color: #1a202c;
+        }
+        
         .container {
-            background-color: #ffffff;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            width: 100%;
-            max-width: 900px;
-            padding: 30px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 24px;
         }
-        .header {
-            background: linear-gradient(to right, #004d40, #0D47A1); /* Dark Green to Dark Blue */
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .header-gradient {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
             color: white;
-            padding: 25px 30px;
-            border-radius: 10px;
+            padding: 32px;
+            border-radius: 20px;
             text-align: center;
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 20px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-            animation: slideInTop 0.8s ease-out;
+            margin-bottom: 32px;
+            box-shadow: 0 8px 32px rgba(30, 41, 59, 0.3);
         }
+        
         .btn-primary {
-            background-color: #0D47A1; /* Dark Blue */
+            background: linear-gradient(135deg, #1e3a8a 0%, #064e3b 100%);
             color: white;
-            padding: 12px 25px;
-            border-radius: 10px;
+            padding: 16px 32px;
+            border-radius: 16px;
+            font-weight: 600;
+            font-size: 1.1rem;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(30, 58, 138, 0.4);
+            width: 100%;
         }
+        
         .btn-primary:hover {
-            background-color: #093c8a; /* Slightly darker blue */
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(30, 58, 138, 0.6);
         }
-        .btn-primary:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
         }
-
-        .btn-secondary {
-            background-color: #004d40; /* Dark Green */
-            color: white;
-            padding: 12px 25px;
-            border-radius: 10px;
+        
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
-        .btn-secondary:hover {
-            background-color: #003a30; /* Slightly darker green */
+        
+        .card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
         }
-        .btn-secondary:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        
+        .candidate-card {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
-
-        .card-candidate {
-            background-color: #f8f8f8;
-            border: 1px solid #e0e0e0;
-            border-radius: 10px;
-            padding: 15px;
+        
+        .candidate-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            border-color: #9ca3af;
+        }
+        
+        .candidate-card.selected {
+            border-color: #1e3a8a;
+            background: linear-gradient(135deg, #dbeafe 0%, #f3f4f6 100%);
+            box-shadow: 0 8px 25px rgba(30, 58, 138, 0.3);
+            transform: translateY(-3px) scale(1.02);
+        }
+        
+        .candidate-card.selected::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #1e3a8a, #064e3b);
+        }
+        
+        .checkbox-custom {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #d1d5db;
+            border-radius: 6px;
             display: flex;
             align-items: center;
-            gap: 15px;
+            justify-content: center;
             transition: all 0.2s ease;
-            cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
         }
-        .card-candidate:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        
+        .candidate-card.selected .checkbox-custom {
+            background: linear-gradient(135deg, #1e3a8a, #064e3b);
+            border-color: #1e3a8a;
         }
-        .card-candidate.selected {
-            border-color: #0D47A1; /* Dark Blue border when selected */
-            background-color: #e3f2fd; /* Light blue background when selected */
-            box-shadow: 0 4px 10px rgba(13, 71, 161, 0.2);
+        
+        .checkmark {
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
         }
-        .card-candidate input[type="checkbox"] {
-            transform: scale(1.5); /* Larger checkbox */
-            accent-color: #0D47A1; /* Custom checkbox color */
+        
+        .qr-scanner-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 32px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
-
-        /* Animations */
-        @keyframes slideInTop {
-            from {
-                transform: translateY(-50px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
+        
+        .qr-reader {
+            border: 4px solid #e5e7eb;
+            border-radius: 16px;
+            overflow: hidden;
+            margin: 24px auto;
+            max-width: 350px;
+            position: relative;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        
+        .qr-reader.scanning {
+            border-color: #1e3a8a;
+            box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.2);
+            animation: pulse-border 2s infinite;
         }
-        .fade-in {
-            animation: fadeIn 0.6s ease-out;
+        
+        @keyframes pulse-border {
+            0%, 100% { box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.2); }
+            50% { box-shadow: 0 0 0 8px rgba(30, 58, 138, 0.1); }
         }
-
-        /* Loading Spinner */
+        
         .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left-color: #0D47A1;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-left-color: #1e3a8a;
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
+            width: 40px;
+            height: 40px;
             animation: spin 1s linear infinite;
         }
+        
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-
-        /* Message Box */
-        .message-box {
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-            padding: 25px;
-            text-align: center;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 1000;
-            max-width: 400px;
-            width: 90%;
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        .message-box-overlay {
+        
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        .loading-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 999;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
         }
-
-        /* Floating Chart Modal */
+        
+        .loading-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            text-align: center;
+        }
+        
         .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
             display: flex;
-            justify-content: center;
             align-items: center;
-            z-index: 900; /* Below message box */
+            justify-content: center;
+            z-index: 1000;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
+            transition: all 0.3s ease;
         }
+        
         .modal-overlay.active {
             opacity: 1;
             visibility: visible;
         }
+        
         .modal-content {
-            background-color: #ffffff;
-            border-radius: 15px;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
-            padding: 30px;
+            background: white;
+            border-radius: 20px;
+            padding: 32px;
+            max-width: 800px;
             width: 90%;
-            max-width: 700px;
-            transform: translateY(-50px);
-            opacity: 0;
-            transition: transform 0.3s ease, opacity 0.3s ease;
-            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            transform: scale(0.9) translateY(20px);
+            transition: transform 0.3s ease;
         }
+        
         .modal-overlay.active .modal-content {
-            transform: translateY(0);
-            opacity: 1;
+            transform: scale(1) translateY(0);
         }
-        .modal-close-btn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: none;
-            border: none;
-            font-size: 1.8rem;
-            color: #666;
-            cursor: pointer;
-            transition: color 0.2s ease;
+        
+        .selection-summary {
+            background: linear-gradient(135deg, #dbeafe 0%, #f0f9ff 100%);
+            border: 2px solid #93c5fd;
+            border-radius: 16px;
+            padding: 24px;
+            margin: 24px 0;
         }
-        .modal-close-btn:hover {
-            color: #333;
+        
+        .selection-count {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-top: 12px;
+        }
+        
+        .selection-count.complete {
+            color: #059669;
+        }
+        
+        .selection-count.incomplete {
+            color: #dc2626;
+        }
+        
+        .success-message {
+            background: linear-gradient(135deg, #d1fae5 0%, #ecfdf5 100%);
+            border: 2px solid #a7f3d0;
+            color: #065f46;
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .error-message {
+            background: linear-gradient(135deg, #fee2e2 0%, #fef2f2 100%);
+            border: 2px solid #fca5a5;
+            color: #991b1b;
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .chart-container {
+            height: 400px;
+            margin: 24px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px;
+            }
+            
+            .header-gradient {
+                padding: 24px 16px;
+            }
+            
+            .candidate-card {
+                padding: 16px;
+            }
+            
+            .qr-scanner-container {
+                padding: 24px 16px;
+            }
+            
+            .modal-content {
+                padding: 24px 16px;
+                margin: 16px;
+            }
         }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen p-5">
+<body>
     <div class="container">
-        <div class="header">
-            Pimpinan Wilayah Muhammadiyah Jawa Barat
-            <div class="text-sm font-normal mt-2">Sistem E-Voting Pemilihan Wakasek</div>
+        <!-- Header -->
+        <div class="header-gradient fade-in">
+            <h1 class="text-3xl font-bold mb-2">Sistem E-Voting Pemilihan Wakasek</h1>
+            <p class="text-lg opacity-90">Pimpinan Wilayah Muhammadiyah Jawa Barat</p>
         </div>
 
         <!-- Loading Overlay -->
-        <div id="loadingOverlay" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-[1000] hidden">
-            <div class="spinner"></div>
-            <p class="text-white ml-3 text-lg">Memuat...</p>
-        </div>
-
-        <!-- Message Box Container -->
-        <div id="messageBoxContainer" class="hidden"></div>
-
-        <!-- Login Section -->
-        <div id="loginSection" class="text-center p-6 bg-white rounded-lg shadow-md fade-in">
-            <h2 class="text-2xl font-semibold mb-4 text-gray-800">Pindai QR Code Anda untuk Memulai</h2>
-            <div id="qr-reader" class="w-full max-w-sm mx-auto border border-gray-300 rounded-lg overflow-hidden"></div>
-            <div id="qr-reader-results" class="mt-4 text-lg font-medium text-gray-700"></div>
-            <p id="loginMessage" class="mt-4 text-red-600 font-medium"></p>
-        </div>
-
-        <!-- Voting Section (Initially Hidden) -->
-        <div id="votingSection" class="hidden p-6 bg-white rounded-lg shadow-md fade-in">
-            <h2 class="text-2xl font-semibold mb-4 text-gray-800 text-center">Selamat Datang, <span id="voterNameDisplay" class="text-blue-700"></span>!</h2>
-            <p class="text-center text-gray-600 mb-6">Silakan pilih <span class="font-bold text-blue-700">tepat 4</span> calon wakasek.</p>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6" id="candidatesList">
-                <!-- Candidates will be loaded here by JavaScript -->
+        <div id="loadingOverlay" class="loading-overlay hidden">
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <h3 class="text-xl font-semibold text-gray-800">Memproses...</h3>
+                <p class="text-gray-600" id="loadingMessage">Mohon tunggu sebentar</p>
             </div>
-
-            <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 mb-6 rounded-md">
-                <p class="font-bold">Review Pilihan Anda:</p>
-                <ul id="selectedCandidatesReview" class="list-disc list-inside mt-2">
-                    <!-- Selected candidates will appear here -->
-                    <li>Belum ada kandidat yang dipilih.</li>
-                </ul>
-                <p id="selectionCount" class="mt-2 text-sm font-medium"></p>
-            </div>
-
-            <p id="votingMessage" class="text-red-600 font-medium mb-4 text-center"></p>
-            <button id="submitVoteBtn" class="w-full btn-primary py-3 px-6 text-xl font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
-                Kirim Suara
-            </button>
         </div>
 
-        <!-- Post-Vote Chart Modal (Initially Hidden) -->
-        <div id="postVoteChartModal" class="modal-overlay">
+        <!-- QR Scanner Section -->
+        <div id="scannerSection" class="fade-in">
+            <div class="qr-scanner-container">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800">Pindai QR Code untuk Memulai</h2>
+                <p class="text-gray-600 mb-6">Arahkan kamera ke QR Code yang telah Anda terima</p>
+                
+                <div id="qr-reader" class="qr-reader"></div>
+                
+                <div class="flex items-center justify-center gap-2 text-blue-600 bg-blue-50 px-4 py-2 rounded-lg inline-flex">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    <span class="font-medium">Kamera Aktif</span>
+                </div>
+                
+                <p id="scannerError" class="error-message hidden"></p>
+            </div>
+        </div>
+
+        <!-- Voting Section -->
+        <div id="votingSection" class="hidden">
+            <div class="card p-8 fade-in">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">
+                        Selamat Datang, <span id="voterName" class="text-blue-600"></span>!
+                    </h2>
+                    <p class="text-gray-600">Silakan pilih <strong class="text-blue-600">tepat 4 calon</strong> wakasek dari daftar di bawah ini</p>
+                </div>
+
+                <!-- Candidates Grid -->
+                <div id="candidatesGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                    <!-- Candidates will be loaded here -->
+                </div>
+
+                <!-- Selection Summary -->
+                <div class="selection-summary">
+                    <h3 class="text-lg font-bold text-gray-800 mb-3">📋 Ringkasan Pilihan Anda</h3>
+                    <ul id="selectedList" class="space-y-2 mb-4">
+                        <li class="text-gray-500 italic">Belum ada kandidat yang dipilih</li>
+                    </ul>
+                    <p id="selectionCount" class="selection-count incomplete">Anda telah memilih 0 dari 4 kandidat</p>
+                </div>
+
+                <!-- Submit Button -->
+                <button id="submitVoteBtn" class="btn-primary" disabled>
+                    🗳️ Kirim Suara Saya
+                </button>
+
+                <p id="votingError" class="error-message hidden"></p>
+            </div>
+        </div>
+
+        <!-- Results Modal -->
+        <div id="resultsModal" class="modal-overlay">
             <div class="modal-content">
-                <button id="closeChartModalBtn" class="modal-close-btn">&times;</button>
-                <h2 class="text-2xl font-semibold mb-4 text-gray-800 text-center">Terima Kasih! Suara Anda Telah Tercatat.</h2>
-                <p class="text-center text-gray-600 mb-6">Berikut adalah hasil sementara pemilihan:</p>
-                <div class="w-full h-80">
+                <div class="text-center mb-6">
+                    <div class="success-message">
+                        <h2 class="text-2xl font-bold mb-2">🎉 Terima Kasih!</h2>
+                        <p class="text-lg">Suara Anda telah berhasil tercatat dalam sistem</p>
+                    </div>
+                </div>
+
+                <h3 class="text-xl font-bold text-center mb-4 text-gray-800">📊 Hasil Sementara Pemilihan</h3>
+                <div class="chart-container">
                     <canvas id="resultsChart"></canvas>
                 </div>
-                <p class="text-center text-gray-500 text-sm mt-6">
-                    Untuk melihat hasil real-time yang diperbarui secara otomatis, kunjungi halaman <a href="panelchart.html" class="text-blue-600 hover:underline">Panel Chart Publik</a>.
-                </p>
+
+                <div class="text-center mt-6">
+                    <p class="text-gray-600 mb-4">
+                        Untuk melihat hasil real-time yang diperbarui secara otomatis, 
+                        kunjungi <strong>Panel Chart Publik</strong>
+                    </p>
+                    <button id="closeModalBtn" class="btn-primary" style="max-width: 300px;">
+                        ✅ Selesai
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -301,91 +442,48 @@
         // Initialize Firebase
         const app = firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
-        const votersRef = database.ref('voters');
-        const candidatesRef = database.ref('candidates');
-        const votesRef = database.ref('votes');
-        const totalVotersCountRef = database.ref('totalVotersCount');
 
-        // DOM Elements
-        const loginSection = document.getElementById('loginSection');
-        const votingSection = document.getElementById('votingSection');
-        const postVoteChartModal = document.getElementById('postVoteChartModal'); // Changed to modal
-        const closeChartModalBtn = document.getElementById('closeChartModalBtn'); // New close button
-        const loginMessage = document.getElementById('loginMessage');
-        const voterNameDisplay = document.getElementById('voterNameDisplay');
-        const candidatesList = document.getElementById('candidatesList');
-        const selectedCandidatesReview = document.getElementById('selectedCandidatesReview');
-        const selectionCountDisplay = document.getElementById('selectionCount');
-        const votingMessage = document.getElementById('votingMessage');
-        const submitVoteBtn = document.getElementById('submitVoteBtn');
-        const resultsChartCanvas = document.getElementById('resultsChart');
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        const messageBoxContainer = document.getElementById('messageBoxContainer');
-
-        // Store candidates data globally once loaded
-        let allCandidatesData = {};
-
-        // Use a Set to ensure unique candidate IDs are stored
-        let selectedCandidateIds = new Set();
+        // Global variables
         let currentVoter = null;
+        let allCandidates = {};
+        let selectedCandidates = new Set();
+        let qrScanner = null;
         let chartInstance = null;
 
-        // --- Utility Functions ---
+        // DOM Elements
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const scannerSection = document.getElementById('scannerSection');
+        const votingSection = document.getElementById('votingSection');
+        const resultsModal = document.getElementById('resultsModal');
+        const voterNameEl = document.getElementById('voterName');
+        const candidatesGrid = document.getElementById('candidatesGrid');
+        const selectedList = document.getElementById('selectedList');
+        const selectionCount = document.getElementById('selectionCount');
+        const submitVoteBtn = document.getElementById('submitVoteBtn');
+        const votingError = document.getElementById('votingError');
+        const scannerError = document.getElementById('scannerError');
+        const resultsChart = document.getElementById('resultsChart');
+        const closeModalBtn = document.getElementById('closeModalBtn');
 
-        // Show loading overlay
-        function showLoading() {
+        // Utility Functions
+        function showLoading(message = 'Memproses...') {
+            loadingMessage.textContent = message;
             loadingOverlay.classList.remove('hidden');
         }
 
-        // Hide loading overlay
         function hideLoading() {
             loadingOverlay.classList.add('hidden');
         }
 
-        // Custom Message Box instead of alert/confirm
-        function showMessageBox(title, message, type = 'info', onConfirm = null) {
-            const overlay = document.createElement('div');
-            overlay.className = 'message-box-overlay';
-            overlay.id = 'messageBoxOverlay';
-
-            const box = document.createElement('div');
-            box.className = 'message-box';
-            box.innerHTML = `
-                <h3 class="text-xl font-bold mb-3 ${type === 'error' ? 'text-red-600' : 'text-blue-700'}">${title}</h3>
-                <p class="text-gray-700 mb-5">${message}</p>
-                <button id="messageBoxCloseBtn" class="btn-primary w-full">OK</button>
-            `;
-
-            messageBoxContainer.innerHTML = ''; // Clear previous messages
-            messageBoxContainer.appendChild(overlay);
-            messageBoxContainer.appendChild(box);
-            messageBoxContainer.classList.remove('hidden');
-
-            const closeBtn = document.getElementById('messageBoxCloseBtn');
-            closeBtn.onclick = () => {
-                messageBoxContainer.classList.add('hidden');
-                messageBoxContainer.innerHTML = '';
-                if (onConfirm) onConfirm();
-            };
+        function showError(element, message) {
+            element.textContent = message;
+            element.classList.remove('hidden');
+            setTimeout(() => element.classList.add('hidden'), 5000);
         }
 
-        // Disable Developer Tools and Right-Click (basic client-side security)
-        document.addEventListener('contextmenu', event => event.preventDefault());
-        document.addEventListener('keydown', event => {
-            if (event.key === 'F12' ||
-                (event.ctrlKey && event.shiftKey && event.key === 'I') ||
-                (event.ctrlKey && event.shiftKey && event.key === 'J') ||
-                (event.ctrlKey && event.key === 'U') ||
-                (event.metaKey && event.altKey && event.key === 'I') // For Mac
-            ) {
-                event.preventDefault();
-                showMessageBox('Akses Terbatas', 'Inspeksi elemen tidak diizinkan untuk keamanan sistem.');
-            }
-        });
-
-        // --- Firebase Data Initialization (Run once, e.g., on first load or if data is empty) ---
+        // Initialize data if needed
         async function initializeFirebaseData() {
-            showLoading();
             try {
                 const initialVoters = [
                     { name: "Wawan Oktriawan, M.E", token: "9855736291" },
@@ -427,370 +525,320 @@
                     "Nandi Hamadi S.Pd", "Jimmy Permana Wijaya, S.Si", "Ari Wibawa, S.T"
                 ];
 
-                // Check if voters data exists
-                const votersSnapshot = await votersRef.once('value');
+                // Check if data exists
+                const votersSnapshot = await firebase.database().ref('voters').once('value');
                 if (!votersSnapshot.exists()) {
-                    const updates = {};
+                    showLoading('Menginisialisasi data sistem...');
+                    
+                    // Initialize voters
+                    const votersUpdates = {};
                     initialVoters.forEach(voter => {
-                        updates[voter.token] = { name: voter.name, used: false, votedFor: [] };
+                        votersUpdates[voter.token] = { name: voter.name, used: false, votedFor: [] };
                     });
-                    await votersRef.update(updates);
-                    console.log("Voters data initialized.");
-                }
+                    await firebase.database().ref('voters').update(votersUpdates);
 
-                // Check if candidates data exists
-                const candidatesSnapshot = await candidatesRef.once('value');
-                if (!candidatesSnapshot.exists()) {
-                    const updates = {};
+                    // Initialize candidates
+                    const candidatesUpdates = {};
                     initialCandidates.forEach((candidateName, index) => {
                         const candidateId = `candidate${index + 1}`;
-                        updates[candidateId] = { name: candidateName, votes: 0 };
+                        candidatesUpdates[candidateId] = { name: candidateName, votes: 0 };
                     });
-                    await candidatesRef.update(updates);
-                    console.log("Candidates data initialized.");
-                } else {
-                    // Load candidates into allCandidatesData if they already exist
-                    allCandidatesData = candidatesSnapshot.val();
+                    await firebase.database().ref('candidates').update(candidatesUpdates);
+
+                    // Set total voters count
+                    await firebase.database().ref('totalVotersCount').set(initialVoters.length);
                 }
 
-                // Set total voters count
-                await totalVotersCountRef.set(initialVoters.length);
-                console.log("Total voters count set.");
-
+                // Load candidates
+                const candidatesSnapshot = await firebase.database().ref('candidates').once('value');
+                allCandidates = candidatesSnapshot.val() || {};
             } catch (error) {
-                console.error("Error initializing Firebase data:", error);
-                showMessageBox('Error', 'Gagal menginisialisasi data. Mohon coba lagi nanti.', 'error');
-            } finally {
-                hideLoading();
+                console.error('Error initializing data:', error);
+                showError(scannerError, 'Gagal menginisialisasi sistem. Silakan refresh halaman.');
             }
         }
 
-        // Call initialization on page load
-        window.onload = async () => {
-            await initializeFirebaseData();
-            startQrScanner();
-        };
+        // QR Scanner
+        function startQRScanner() {
+            const qrReader = document.getElementById('qr-reader');
+            qrReader.classList.add('scanning');
+            
+            qrScanner = new Html5Qrcode("qr-reader");
+            
+            const config = { 
+                fps: 10, 
+                qrbox: { width: 280, height: 280 },
+                aspectRatio: 1.0
+            };
 
-        // --- QR Code Scanner Logic ---
-        function startQrScanner() {
-            const html5QrCode = new Html5Qrcode("qr-reader");
-            const qrCodeSuccessCallback = async (decodedText, decodedResult) => {
-                html5QrCode.stop().then(async (ignore) => {
-                    // QR code scanned successfully, process the token
+            qrScanner.start(
+                { facingMode: "environment" },
+                config,
+                async (decodedText) => {
+                    qrReader.classList.remove('scanning');
+                    await qrScanner.stop();
                     await handleTokenLogin(decodedText);
-                }).catch((err) => {
-                    console.error("Failed to stop QR scanner:", err);
-                    showMessageBox('Error QR', 'Gagal menghentikan pemindai QR. Silakan refresh halaman.', 'error');
-                });
-            };
-            const qrCodeErrorCallback = (errorMessage) => {
-                // console.warn("QR Error:", errorMessage); // Log for debugging, but don't show to user
-            };
-
-            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-            html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback, qrCodeErrorCallback);
+                },
+                (errorMessage) => {
+                    // Ignore frequent scanning errors
+                }
+            ).catch(err => {
+                console.error('QR Scanner error:', err);
+                showError(scannerError, 'Gagal mengakses kamera. Pastikan izin kamera telah diberikan.');
+            });
         }
 
+        // Handle token login
         async function handleTokenLogin(token) {
-            showLoading();
-            loginMessage.textContent = ''; // Clear previous messages
+            showLoading('Memverifikasi token...');
+            
             try {
-                const voterSnapshot = await votersRef.child(token).once('value');
+                const voterSnapshot = await firebase.database().ref(`voters/${token}`).once('value');
                 const voterData = voterSnapshot.val();
 
-                if (voterData) {
-                    if (!voterData.used) {
-                        // Valid token and not used, log in
-                        currentVoter = { token: token, name: voterData.name };
-                        voterNameDisplay.textContent = currentVoter.name;
-
-                        // Mark token as used immediately (optimistic update)
-                        // This is crucial for preventing double votes even if the user refreshes
-                        await votersRef.child(token).update({ used: true });
-
-                        loginSection.classList.add('hidden');
-                        votingSection.classList.remove('hidden');
-                        votingSection.classList.add('fade-in');
-                        await loadCandidatesForVoting();
-                    } else {
-                        loginMessage.textContent = 'Token ini sudah digunakan. Anda sudah memberikan suara.';
-                        showMessageBox('Token Digunakan', 'Token ini sudah digunakan. Anda sudah memberikan suara.', 'error', () => {
-                            startQrScanner(); // Restart scanner for next attempt
-                        });
-                    }
-                } else {
-                    loginMessage.textContent = 'Token tidak valid. Mohon coba lagi.';
-                    showMessageBox('Token Tidak Valid', 'Token yang Anda pindai tidak terdaftar. Mohon periksa kembali.', 'error', () => {
-                        startQrScanner(); // Restart scanner for next attempt
-                    });
-                }
-            } catch (error) {
-                console.error("Login error:", error);
-                loginMessage.textContent = 'Terjadi kesalahan saat login. Mohon coba lagi.';
-                showMessageBox('Kesalahan Login', 'Terjadi kesalahan saat mencoba masuk. Silakan coba lagi.', 'error', () => {
-                    startQrScanner(); // Restart scanner for next attempt
-                });
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // --- Voting Logic ---
-        async function loadCandidatesForVoting() {
-            showLoading();
-            try {
-                const snapshot = await candidatesRef.once('value');
-                allCandidatesData = snapshot.val(); // Store all candidates data
-                candidatesList.innerHTML = ''; // Clear existing list
-                if (allCandidatesData) {
-                    Object.keys(allCandidatesData).forEach(candidateId => {
-                        const candidate = allCandidatesData[candidateId];
-                        const card = document.createElement('div');
-                        card.className = 'card-candidate rounded-lg p-4 bg-gray-50 hover:bg-gray-100 flex items-center space-x-3 transition-all duration-200';
-                        card.innerHTML = `
-                            <input type="checkbox" id="candidate-${candidateId}" value="${candidateId}" data-name="${candidate.name}" class="form-checkbox h-6 w-6 text-blue-600 rounded focus:ring-blue-500">
-                            <label for="candidate-${candidateId}" class="text-lg font-medium text-gray-800 flex-grow cursor-pointer">${candidate.name}</label>
-                        `;
-                        candidatesList.appendChild(card);
-
-                        const checkbox = card.querySelector(`#candidate-${candidateId}`);
-                        checkbox.addEventListener('change', (event) => {
-                            handleCandidateSelection(event.target.value, event.target.checked);
-                        });
-                        card.addEventListener('click', () => {
-                            checkbox.checked = !checkbox.checked;
-                            checkbox.dispatchEvent(new Event('change'));
-                        });
-                    });
-                    updateSelectionReview();
-                } else {
-                    candidatesList.innerHTML = '<p class="text-center text-gray-500">Tidak ada kandidat yang tersedia.</p>';
-                }
-            } catch (error) {
-                console.error("Error loading candidates:", error);
-                showMessageBox('Error', 'Gagal memuat daftar kandidat. Silakan refresh halaman.', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        function handleCandidateSelection(candidateId, isChecked) {
-            const card = document.querySelector(`input[value="${candidateId}"]`).closest('.card-candidate');
-
-            if (isChecked) {
-                if (selectedCandidateIds.size < 4) {
-                    selectedCandidateIds.add(candidateId);
-                    card.classList.add('selected');
-                } else {
-                    // If already 4, uncheck the box and notify
-                    document.querySelector(`input[value="${candidateId}"]`).checked = false;
-                    showMessageBox('Peringatan', 'Anda hanya dapat memilih maksimal 4 calon wakasek.', 'warning');
-                }
-            } else {
-                selectedCandidateIds.delete(candidateId);
-                card.classList.remove('selected');
-            }
-            updateSelectionReview();
-        }
-
-        function updateSelectionReview() {
-            selectedCandidatesReview.innerHTML = '';
-            if (selectedCandidateIds.size === 0) {
-                selectedCandidatesReview.innerHTML = '<li>Belum ada kandidat yang dipilih.</li>';
-            } else {
-                // Iterate through the Set of selected IDs and get names from allCandidatesData
-                selectedCandidateIds.forEach(id => {
-                    const li = document.createElement('li');
-                    li.textContent = allCandidatesData[id] ? allCandidatesData[id].name : 'Kandidat Tidak Dikenal';
-                    selectedCandidatesReview.appendChild(li);
-                });
-            }
-            selectionCountDisplay.textContent = `Anda telah memilih ${selectedCandidateIds.size} dari 4 kandidat.`;
-
-            if (selectedCandidateIds.size === 4) {
-                selectionCountDisplay.classList.remove('text-red-600');
-                selectionCountDisplay.classList.add('text-green-600');
-                votingMessage.textContent = '';
-            } else {
-                selectionCountDisplay.classList.remove('text-green-600');
-                selectionCountDisplay.classList.add('text-red-600');
-                votingMessage.textContent = 'Anda harus memilih tepat 4 calon wakasek.';
-            }
-        }
-
-        submitVoteBtn.addEventListener('click', async () => {
-            if (selectedCandidateIds.size !== 4) {
-                showMessageBox('Peringatan', 'Anda harus memilih tepat 4 calon wakasek sebelum mengirim suara.', 'warning');
-                return;
-            }
-
-            if (!currentVoter) {
-                showMessageBox('Kesalahan', 'Data pemilih tidak ditemukan. Mohon masuk kembali.', 'error');
-                return;
-            }
-
-            showLoading();
-            try {
-                // Verify token status one last time to prevent double voting due to race conditions
-                const voterSnapshot = await votersRef.child(currentVoter.token).once('value');
-                const voterData = voterSnapshot.val();
-
-                if (!voterData || voterData.used) {
-                    showMessageBox('Kesalahan', 'Token Anda sudah digunakan atau tidak valid. Silakan hubungi admin.', 'error');
+                if (!voterData) {
                     hideLoading();
+                    showError(scannerError, 'Token tidak valid. Silakan periksa QR Code Anda.');
+                    startQRScanner();
                     return;
                 }
 
-                // Convert Set to Array for Firebase storage
-                const choicesArray = Array.from(selectedCandidateIds);
-
-                // Store individual vote
-                const voteId = `${Date.now()}-${currentVoter.token}`;
-                await votesRef.child(voteId).set({
-                    voterName: currentVoter.name,
-                    voterToken: currentVoter.token,
-                    timestamp: new Date().toISOString(),
-                    choices: choicesArray
-                });
-
-                // Update candidate vote counts
-                const updates = {};
-                for (const candidateId of choicesArray) {
-                    updates[`${candidateId}/votes`] = firebase.database.ServerValue.increment(1);
+                if (voterData.used) {
+                    hideLoading();
+                    showError(scannerError, 'Token sudah digunakan. Anda sudah memberikan suara.');
+                    return;
                 }
-                await candidatesRef.update(updates);
 
-                // Update voter's votedFor array (for admin tracking)
-                // Store names for easier admin view
-                const votedForNames = choicesArray.map(id => allCandidatesData[id] ? allCandidatesData[id].name : 'Unknown Candidate');
-                await votersRef.child(currentVoter.token).update({
-                    votedFor: votedForNames
-                });
+                // Mark token as used immediately
+                await firebase.database().ref(`voters/${token}`).update({ used: true });
 
-                showMessageBox('Berhasil!', 'Suara Anda telah berhasil dicatat. Terima kasih atas partisipasi Anda!', 'info', () => {
-                    votingSection.classList.add('hidden'); // Hide voting section
-                    postVoteChartModal.classList.add('active'); // Show the modal
-                    renderResultsChart(); // Render chart inside the modal
-                });
+                currentVoter = { token, name: voterData.name };
+                voterNameEl.textContent = currentVoter.name;
 
-            } catch (error) {
-                console.error("Error submitting vote:", error);
-                showMessageBox('Error', 'Terjadi kesalahan saat mengirim suara. Mohon coba lagi.', 'error');
-            } finally {
+                // Load voting interface
+                loadVotingInterface();
+                
+                scannerSection.classList.add('hidden');
+                votingSection.classList.remove('hidden');
+                
                 hideLoading();
-            }
-        });
-
-        // --- Post-Vote Chart Logic (now in a modal) ---
-        async function renderResultsChart() {
-            showLoading();
-            try {
-                // Fetch latest candidate data to ensure chart is up-to-date
-                const snapshot = await candidatesRef.once('value');
-                const candidatesData = snapshot.val();
-
-                if (candidatesData) {
-                    const labels = [];
-                    const data = [];
-                    const backgroundColors = [];
-                    const borderColors = [];
-
-                    const colors = [
-                        'rgba(13, 71, 161, 0.8)', // Dark Blue
-                        'rgba(0, 77, 64, 0.8)',   // Dark Green
-                        'rgba(255, 159, 64, 0.8)',
-                        'rgba(75, 192, 192, 0.8)',
-                        'rgba(153, 102, 255, 0.8)',
-                        'rgba(255, 99, 132, 0.8)',
-                        'rgba(54, 162, 235, 0.8)',
-                        'rgba(201, 203, 207, 0.8)'
-                    ];
-
-                    // Sort candidates by votes in descending order
-                    const sortedCandidates = Object.values(candidatesData).sort((a, b) => b.votes - a.votes);
-
-                    sortedCandidates.forEach((candidate, index) => {
-                        labels.push(candidate.name);
-                        data.push(candidate.votes);
-                        backgroundColors.push(colors[index % colors.length]);
-                        borderColors.push(colors[index % colors.length].replace('0.8', '1'));
-                    });
-
-                    if (chartInstance) {
-                        chartInstance.destroy(); // Destroy previous chart instance
-                    }
-
-                    chartInstance = new Chart(resultsChartCanvas, {
-                        type: 'bar',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                label: 'Jumlah Suara',
-                                data: data,
-                                backgroundColor: backgroundColors,
-                                borderColor: borderColors,
-                                borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            indexAxis: 'y', // Horizontal bars
-                            plugins: {
-                                legend: {
-                                    display: false // Hide legend for single dataset
-                                },
-                                title: {
-                                    display: true,
-                                    text: 'Hasil Sementara Pemilihan',
-                                    font: {
-                                        size: 18,
-                                        weight: 'bold'
-                                    },
-                                    color: '#333'
-                                }
-                            },
-                            scales: {
-                                x: {
-                                    beginAtZero: true,
-                                    title: {
-                                        display: true,
-                                        text: 'Jumlah Suara',
-                                        color: '#555'
-                                    },
-                                    ticks: {
-                                        stepSize: 1,
-                                        color: '#555'
-                                    },
-                                    grid: {
-                                        color: 'rgba(0, 0, 0, 0.05)'
-                                    }
-                                },
-                                y: {
-                                    ticks: {
-                                        color: '#555'
-                                    },
-                                    grid: {
-                                        display: false
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
             } catch (error) {
-                console.error("Error rendering chart:", error);
-                showMessageBox('Error', 'Gagal memuat chart hasil. Silakan refresh halaman.', 'error');
-            } finally {
+                console.error('Login error:', error);
                 hideLoading();
+                showError(scannerError, 'Terjadi kesalahan saat login. Silakan coba lagi.');
+                startQRScanner();
             }
         }
 
-        // Close chart modal
-        closeChartModalBtn.addEventListener('click', () => {
-            postVoteChartModal.classList.remove('active');
-            // Optionally, redirect or reset the page for a new voter
-            window.location.reload(); // Reloads the page to go back to QR scan
+        // Load voting interface
+        function loadVotingInterface() {
+            candidatesGrid.innerHTML = '';
+            
+            Object.keys(allCandidates).forEach(candidateId => {
+                const candidate = allCandidates[candidateId];
+                const candidateCard = document.createElement('div');
+                candidateCard.className = 'candidate-card';
+                candidateCard.innerHTML = `
+                    <div class="flex items-center space-x-4">
+                        <div class="checkbox-custom">
+                            <span class="checkmark hidden">✓</span>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-gray-900">${candidate.name}</h3>
+                        </div>
+                    </div>
+                `;
+                
+                candidateCard.addEventListener('click', () => toggleCandidate(candidateId, candidateCard));
+                candidatesGrid.appendChild(candidateCard);
+            });
+        }
+
+        // Toggle candidate selection
+        function toggleCandidate(candidateId, cardElement) {
+            const isSelected = selectedCandidates.has(candidateId);
+            
+            if (isSelected) {
+                selectedCandidates.delete(candidateId);
+                cardElement.classList.remove('selected');
+                cardElement.querySelector('.checkmark').classList.add('hidden');
+            } else {
+                if (selectedCandidates.size >= 4) {
+                    showError(votingError, 'Anda hanya dapat memilih maksimal 4 kandidat.');
+                    return;
+                }
+                selectedCandidates.add(candidateId);
+                cardElement.classList.add('selected');
+                cardElement.querySelector('.checkmark').classList.remove('hidden');
+            }
+            
+            updateSelectionSummary();
+        }
+
+        // Update selection summary
+        function updateSelectionSummary() {
+            const selectedArray = Array.from(selectedCandidates);
+            
+            if (selectedArray.length === 0) {
+                selectedList.innerHTML = '<li class="text-gray-500 italic">Belum ada kandidat yang dipilih</li>';
+            } else {
+                selectedList.innerHTML = selectedArray.map(id => {
+                    const candidate = allCandidates[id];
+                    return `<li class="flex items-center space-x-2">
+                        <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
+                        <span class="font-medium">${candidate.name}</span>
+                    </li>`;
+                }).join('');
+            }
+            
+            const countText = `Anda telah memilih ${selectedArray.length} dari 4 kandidat`;
+            selectionCount.textContent = countText;
+            
+            if (selectedArray.length === 4) {
+                selectionCount.className = 'selection-count complete';
+                submitVoteBtn.disabled = false;
+            } else {
+                selectionCount.className = 'selection-count incomplete';
+                submitVoteBtn.disabled = true;
+            }
+        }
+
+        // Submit vote
+        submitVoteBtn.addEventListener('click', async () => {
+            if (selectedCandidates.size !== 4) {
+                showError(votingError, 'Anda harus memilih tepat 4 kandidat.');
+                return;
+            }
+
+            showLoading('Mengirim suara Anda...');
+            
+            try {
+                const selectedArray = Array.from(selectedCandidates);
+                const voteId = `${Date.now()}-${currentVoter.token}`;
+                
+                // Store vote
+                await firebase.database().ref(`votes/${voteId}`).set({
+                    voterName: currentVoter.name,
+                    voterToken: currentVoter.token,
+                    timestamp: new Date().toISOString(),
+                    choices: selectedArray
+                });
+
+                // Update candidate vote counts
+                const candidatesUpdates = {};
+                selectedArray.forEach(candidateId => {
+                    const currentVotes = allCandidates[candidateId].votes || 0;
+                    candidatesUpdates[`${candidateId}/votes`] = currentVotes + 1;
+                });
+                await firebase.database().ref('candidates').update(candidatesUpdates);
+
+                // Update voter's votedFor
+                const votedForNames = selectedArray.map(id => allCandidates[id].name);
+                await firebase.database().ref(`voters/${currentVoter.token}`).update({
+                    votedFor: votedForNames
+                });
+
+                hideLoading();
+                await showResultsModal();
+                
+            } catch (error) {
+                console.error('Error submitting vote:', error);
+                hideLoading();
+                showError(votingError, 'Gagal mengirim suara. Silakan coba lagi.');
+            }
+        });
+
+        // Show results modal
+        async function showResultsModal() {
+            try {
+                // Get latest candidate data
+                const candidatesSnapshot = await firebase.database().ref('candidates').once('value');
+                const candidates = candidatesSnapshot.val() || {};
+                
+                // Create chart
+                const sortedCandidates = Object.values(candidates).sort((a, b) => b.votes - a.votes);
+                
+                const colors = [
+                    'rgba(30, 58, 138, 0.8)',   // Dark Blue
+                    'rgba(6, 78, 59, 0.8)',     // Dark Green
+                    'rgba(245, 158, 11, 0.8)',  // Amber
+                    'rgba(239, 68, 68, 0.8)',   // Red
+                    'rgba(139, 92, 246, 0.8)',  // Purple
+                    'rgba(236, 72, 153, 0.8)',  // Pink
+                    'rgba(14, 165, 233, 0.8)',  // Sky
+                    'rgba(34, 197, 94, 0.8)'    // Green
+                ];
+
+                const data = {
+                    labels: sortedCandidates.map(c => c.name),
+                    datasets: [{
+                        label: 'Jumlah Suara',
+                        data: sortedCandidates.map(c => c.votes),
+                        backgroundColor: colors,
+                        borderColor: colors.map(color => color.replace('0.8', '1')),
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }]
+                };
+
+                const options = {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false },
+                        title: {
+                            display: true,
+                            text: 'Hasil Sementara Pemilihan',
+                            font: { size: 16, weight: 'bold' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 }
+                        },
+                        y: {
+                            ticks: { font: { size: 12 } }
+                        }
+                    }
+                };
+
+                if (chartInstance) {
+                    chartInstance.destroy();
+                }
+                chartInstance = new Chart(resultsChart, { type: 'bar', data, options });
+                
+                resultsModal.classList.add('active');
+            } catch (error) {
+                console.error('Error showing results:', error);
+            }
+        }
+
+        // Close modal
+        closeModalBtn.addEventListener('click', () => {
+            resultsModal.classList.remove('active');
+            // Reload page for next voter
+            setTimeout(() => window.location.reload(), 500);
+        });
+
+        // Disable developer tools
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('keydown', e => {
+            if (e.key === 'F12' || 
+                (e.ctrlKey && e.shiftKey && e.key === 'I') ||
+                (e.ctrlKey && e.shiftKey && e.key === 'J') ||
+                (e.ctrlKey && e.key === 'U')) {
+                e.preventDefault();
+            }
+        });
+
+        // Initialize
+        window.addEventListener('load', async () => {
+            showLoading('Memuat sistem...');
+            await initializeFirebaseData();
+            hideLoading();
+            startQRScanner();
         });
     </script>
 </body>
