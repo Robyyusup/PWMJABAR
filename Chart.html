@@ -370,7 +370,9 @@
 
         // Chart update function
         function updateChart(candidates) {
-            const sortedCandidates = Object.values(candidates).sort((a, b) => b.votes - a.votes);
+            // Filter out "Wawan Oktriawan" if present
+            const filteredCandidates = Object.values(candidates).filter(candidate => candidate.name !== "Wawan Oktriawan, M.E");
+            const sortedCandidates = filteredCandidates.sort((a, b) => b.votes - a.votes);
             
             // Enhanced color palette with dark blue and dark green theme
             const colors = [
@@ -481,9 +483,9 @@
 
                 // Get all data from Firebase
                 const [votersSnapshot, candidatesSnapshot, totalVotersSnapshot] = await Promise.all([
-                    firebase.database().ref('voters').once('value'),
-                    firebase.database().ref('candidates').once('value'),
-                    firebase.database().ref('totalVotersCount').once('value')
+                    database.ref('voters').once('value'),
+                    database.ref('candidates').once('value'),
+                    database.ref('totalVotersCount').once('value')
                 ]);
 
                 const voters = votersSnapshot.val() || {};
