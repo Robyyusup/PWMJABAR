@@ -465,10 +465,10 @@
             try {
                 // Get all data from Firebase
                 const [votersSnapshot, candidatesSnapshot, votesSnapshot, totalVotersSnapshot] = await Promise.all([
-                    firebase.database().ref('voters').once('value'),
-                    firebase.database().ref('candidates').once('value'),
-                    firebase.database().ref('votes').once('value'),
-                    firebase.database().ref('totalVotersCount').once('value')
+                    database.ref('voters').once('value'),
+                    database.ref('candidates').once('value'),
+                    database.ref('votes').once('value'),
+                    database.ref('totalVotersCount').once('value')
                 ]);
 
                 const voters = votersSnapshot.val() || {};
@@ -500,7 +500,9 @@
         }
 
         function updateChart(candidates) {
-            const sortedCandidates = Object.values(candidates).sort((a, b) => b.votes - a.votes);
+            // Filter out "Wawan Oktriawan" if present
+            const filteredCandidates = Object.values(candidates).filter(candidate => candidate.name !== "Wawan Oktriawan, M.E");
+            const sortedCandidates = filteredCandidates.sort((a, b) => b.votes - a.votes);
             
             const colors = [
                 'rgba(30, 58, 138, 0.8)',   // Dark Blue
@@ -518,8 +520,8 @@
                 datasets: [{
                     label: 'Jumlah Suara',
                     data: sortedCandidates.map(c => c.votes),
-                    backgroundColor: colors,
-                    borderColor: colors.map(color => color.replace('0.8', '1')),
+                    backgroundColor: colors.slice(0, sortedCandidates.length),
+                    borderColor: colors.slice(0, sortedCandidates.length).map(color => color.replace('0.8', '1')),
                     borderWidth: 2,
                     borderRadius: 8
                 }]
@@ -580,7 +582,8 @@
                 votingDetailsTableEl.innerHTML = '<tr class="table-row"><td colspan="3" class="text-center text-gray-500">Belum ada suara yang masuk</td></tr>';
             } else {
                 votingDetailsTableEl.innerHTML = sortedVotes.map(vote => {
-                    const choices = vote.choices.map(id => candidates[id]?.name || 'Unknown').join(', ');
+                    // Filter out "Wawan Oktriawan" from choices if present
+                    const choices = vote.choices.map(id => candidates[id]?.name || 'Unknown').filter(name => name !== "Wawan Oktriawan, M.E").join(', ');
                     const time = new Date(vote.timestamp).toLocaleString('id-ID');
                     return `
                         <tr class="table-row">
@@ -654,7 +657,7 @@
             showLoading();
             try {
                 // Reset voters
-                const votersSnapshot = await firebase.database().ref('voters').once('value');
+                const votersSnapshot = await database.ref('voters').once('value');
                 const voters = votersSnapshot.val() || {};
                 const votersUpdates = {};
                 Object.keys(voters).forEach(token => {
@@ -664,22 +667,31 @@
                         votedFor: []
                     };
                 });
-                await firebase.database().ref('voters').update(votersUpdates);
+                await database.ref('voters').update(votersUpdates);
 
                 // Reset candidates
-                const candidatesSnapshot = await firebase.database().ref('candidates').once('value');
+                const candidatesSnapshot = await database.ref('candidates').once('value');
                 const candidates = candidatesSnapshot.val() || {};
                 const candidatesUpdates = {};
-                Object.keys(candidates).forEach(id => {
-                    candidatesUpdates[id] = {
-                        name: candidates[id].name,
-                        votes: 0
-                    };
+                // Filter out "Wawan Oktriawan" when resetting candidates
+                const initialCandidatesForReset = [
+                    "Jumanto, S.T", "Adi Hermawan, S.T", "Ernawati, S.H",
+                    "Lyna Devy F., S.Pd", "Sukarsih, M.Pd", "Sri Wulan, S.Pd", "Nurul Wangsa M., S.Pd",
+                    "Priyo Wiji Utomo, S.Pd", "Sigit Ramdhani, S.T", "Kiki Putra, S.T", "Noval Ridho Pasyola, S.PdI",
+                    "Ellis Hayati, S.Pd", "Neng Leni, S.Kom", "Agt Eko Priyantono M.M", "Agustiar Tedjo Aspurwa, S.E",
+                    "M. Ridwan Hasibuan, S.H", "Indra Supriatna, S.Kom", "Nanda Faradhitta, A.Md", "Khaerunisa, S.Pd",
+                    "Muhammad Imron Aulia, S.P", "Enjang Seefullah, S.T", "M. Firdaus Z.S. Th.I", "Jepi Prasetyo Ahmad, S.Pd",
+                    "Nandi Hamadi S.Pd", "Jimmy Permana Wijaya, S.Si", "Ari Wibawa, S.T"
+                ];
+
+                initialCandidatesForReset.forEach((candidateName, index) => {
+                    const candidateId = `candidate${index + 1}`;
+                    candidatesUpdates[candidateId] = { name: candidateName, votes: 0 };
                 });
-                await firebase.database().ref('candidates').update(candidatesUpdates);
+                await database.ref('candidates').set(candidatesUpdates); // Use set to overwrite
 
                 // Clear votes
-                await firebase.database().ref('votes').remove();
+                await database.ref('votes').remove();
 
                 showMessage('Semua data berhasil direset!', 'success');
                 updateDashboardData();
