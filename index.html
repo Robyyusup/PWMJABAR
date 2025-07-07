@@ -383,7 +383,7 @@
                     <h2 class="text-2xl font-bold text-gray-800 mb-2">
                         Selamat Datang, <span id="voterName" class="text-blue-600"></span>!
                     </h2>
-                    <p class="text-gray-600">Silakan pilih <strong class="text-blue-600">tepat 4 calon</strong> wakasek dari daftar di bawah ini</p>
+                    <p class="text-gray-600">Silakan pilih <strong class="text-blue-600">tepat 3 calon</strong> wakasek dari daftar di bawah ini</p>
                 </div>
 
                 <!-- Candidates Grid -->
@@ -397,7 +397,7 @@
                     <ul id="selectedList" class="space-y-2 mb-4">
                         <li class="text-gray-500 italic">Belum ada kandidat yang dipilih</li>
                     </ul>
-                    <p id="selectionCount" class="selection-count incomplete">Anda telah memilih 0 dari 4 kandidat</p>
+                    <p id="selectionCount" class="selection-count incomplete">Anda telah memilih 0 dari 3 kandidat</p>
                 </div>
 
                 <!-- Submit Button -->
@@ -459,6 +459,7 @@
         let selectedCandidates = new Set();
         let qrScanner = null;
         let chartInstance = null;
+        const MAX_SELECTIONS = 3; // Changed from 4 to 3
 
         // DOM Elements
         const loadingOverlay = document.getElementById('loadingOverlay');
@@ -681,8 +682,8 @@
                 cardElement.classList.remove('selected');
                 cardElement.querySelector('.checkmark').classList.add('hidden');
             } else {
-                if (selectedCandidates.size >= 4) {
-                    showError(votingError, 'Anda hanya dapat memilih maksimal 4 kandidat.');
+                if (selectedCandidates.size >= MAX_SELECTIONS) { // Changed from 4 to MAX_SELECTIONS
+                    showError(votingError, `Anda hanya dapat memilih maksimal ${MAX_SELECTIONS} kandidat.`);
                     return;
                 }
                 selectedCandidates.add(candidateId);
@@ -709,10 +710,10 @@
                 }).join('');
             }
             
-            const countText = `Anda telah memilih ${selectedArray.length} dari 4 kandidat`;
+            const countText = `Anda telah memilih ${selectedArray.length} dari ${MAX_SELECTIONS} kandidat`; // Changed from 4 to MAX_SELECTIONS
             selectionCount.textContent = countText;
             
-            if (selectedArray.length === 4) {
+            if (selectedArray.length === MAX_SELECTIONS) { // Changed from 4 to MAX_SELECTIONS
                 selectionCount.className = 'selection-count complete';
                 submitVoteBtn.disabled = false;
             } else {
@@ -723,8 +724,8 @@
 
         // Submit vote
         submitVoteBtn.addEventListener('click', async () => {
-            if (selectedCandidates.size !== 4) {
-                showError(votingError, 'Anda harus memilih tepat 4 kandidat.');
+            if (selectedCandidates.size !== MAX_SELECTIONS) { // Changed from 4 to MAX_SELECTIONS
+                showError(votingError, `Anda harus memilih tepat ${MAX_SELECTIONS} kandidat.`);
                 return;
             }
 
