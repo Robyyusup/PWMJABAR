@@ -3,30 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pemindai QR Code</title>
+    <title>Pemindai Barcode Angka & Absensi</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start; /* Start from top */
             min-height: 100vh;
             margin: 0;
             background-color: #f4f4f4;
+            padding-top: 20px;
+        }
+        h1, h2 {
+            color: #333;
+            text-align: center;
         }
         #video-container {
-            width: 80%;
+            width: 90%;
             max-width: 500px;
             background-color: #000;
             margin-bottom: 20px;
             border-radius: 8px;
             overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
         video {
             width: 100%;
             height: auto;
             display: block;
+        }
+        #scan-status {
+            margin-top: 10px;
+            font-size: 1.1em;
+            color: #555;
+            padding: 10px;
+            background-color: #e0f7fa;
+            border-left: 5px solid #00bcd4;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 4px;
         }
         #result {
             margin-top: 20px;
@@ -37,9 +54,10 @@
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             text-align: center;
-            width: 80%;
+            width: 90%;
             max-width: 500px;
-            word-wrap: break-word; /* Untuk teks panjang */
+            word-wrap: break-word;
+            min-height: 50px; /* Agar tidak collapse */
         }
         button {
             padding: 10px 20px;
@@ -49,99 +67,266 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            margin-top: 10px;
+            margin: 5px;
+            transition: background-color 0.3s ease;
         }
         button:hover {
             background-color: #0056b3;
         }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
         #error-message {
             color: red;
             margin-top: 10px;
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        #name-list-container {
+            width: 90%;
+            max-width: 600px;
+            margin-top: 30px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 40px; /* Ruang bawah */
+        }
+        #name-list {
+            list-style: none;
+            padding: 0;
+            max-height: 400px; /* Scrollable list */
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 4px;
+        }
+        #name-list li {
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #name-list li:last-child {
+            border-bottom: none;
+        }
+        #name-list li.scanned {
+            background-color: #e6ffe6; /* Light green */
+            color: #28a745; /* Darker green text */
+            font-weight: bold;
+        }
+        #name-list li.scanned::after {
+            content: '✓';
+            color: #28a745;
+            margin-left: 10px;
+            font-size: 1.2em;
+        }
+        .name-details {
+            display: block;
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 2px;
         }
     </style>
 </head>
 <body>
-    <h1>Pemindai QR Code</h1>
-    <p>Pastikan kamera Anda diizinkan dan arahkan ke QR Code.</p>
+    <h1>Sistem Pemindai Barcode Angka (Absensi/Verifikasi)</h1>
+    <p>Arahkan kamera Anda ke Barcode/QR Code angka untuk memindai.</p>
 
     <div id="video-container">
         <video id="qr-video"></video>
     </div>
 
-    <button id="start-scan">Mulai Pindai</button>
-    <button id="stop-scan" style="display: none;">Hentikan Pindai</button>
+    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+        <button id="start-scan">Mulai Pindai</button>
+        <button id="stop-scan" style="display: none;">Hentikan Pindai</button>
+    </div>
 
-    <div id="result">Hasil Pindai: Belum ada QR Code terdeteksi</div>
+    <div id="scan-status">Status Pemindaian: Siap</div>
+    <div id="result">Hasil Pindai Terakhir: -</div>
     <div id="error-message"></div>
+
+    <div id="name-list-container">
+        <h2>Daftar Peserta/Data</h2>
+        <p id="scan-summary"></p>
+        <ul id="name-list">
+            </ul>
+    </div>
 
     <script src="https://rawgit.com/schmich/instascan/master/instascan.min.js"></script>
 
     <script>
         const video = document.getElementById('qr-video');
+        const scanStatusDiv = document.getElementById('scan-status');
         const resultDiv = document.getElementById('result');
         const startScanButton = document.getElementById('start-scan');
         const stopScanButton = document.getElementById('stop-scan');
         const errorMessageDiv = document.getElementById('error-message');
+        const nameListUl = document.getElementById('name-list');
+        const scanSummaryP = document.getElementById('scan-summary');
 
         let scanner;
+        let cameras = [];
+        let activeCameraIndex = 0;
 
-        function startScanner() {
-            errorMessageDiv.textContent = ''; // Bersihkan pesan error sebelumnya
-            if (scanner) {
-                scanner.stop().then(() => {
-                    startScanLogic();
-                }).catch(err => {
-                    errorMessageDiv.textContent = 'Gagal menghentikan pemindai sebelumnya: ' + err;
-                    console.error('Error stopping scanner:', err);
-                    startScanLogic(); // Coba mulai lagi meski ada error
-                });
-            } else {
-                startScanLogic();
-            }
+        // =================================================================
+        // DATA NAMA ANDA (Diperbarui dengan angka barcode)
+        // qrCodeValue sekarang adalah string angka yang ada di barcode
+        // =================================================================
+        const dataNama = [
+            { id: '1', nama: 'Wawan Oktriawan', gelar: 'M.E', qrCodeValue: '9855736291' },
+            { id: '2', nama: 'Jumanto', gelar: 'S.T', qrCodeValue: '0016464828' },
+            { id: '3', nama: 'Ernawati', gelar: 'S.H', qrCodeValue: '9128250973' },
+            { id: '4', nama: 'Lyna Devy F.', gelar: 'S.Pd', qrCodeValue: '8971639785' },
+            { id: '5', nama: 'Sukarsih', gelar: 'M.Pd', qrCodeValue: '2144333413' },
+            { id: '6', nama: 'Sri Wulan', gelar: 'S.Pd', qrCodeValue: '8801069675' },
+            { id: '7', nama: 'Nurul Wangsa M.', gelar: 'S.Pd', qrCodeValue: '4815123510' },
+            { id: '8', nama: 'Priyo Wiji Utomo', gelar: 'S.Pd', qrCodeValue: '0351915697' },
+            { id: '9', nama: 'Sigit Ramdhani', gelar: 'S.T', qrCodeValue: '4290999891' },
+            { id: '10', nama: 'Kiki Putra', gelar: 'S.T', qrCodeValue: '8855950227' },
+            { id: '11', nama: 'Naufal Ridho Pasyola', gelar: 'S.Pdi', qrCodeValue: '4251117062' },
+            { id: '12', nama: 'Ellis Hayati', gelar: 'S.Pd', qrCodeValue: '5795769291' },
+            { id: '13', nama: 'Neng Leni', gelar: 'S.Kom', qrCodeValue: '3384148766' },
+            { id: '14', nama: 'Agt Eko Priyantono', gelar: 'M.M', qrCodeValue: '5067064548' },
+            { id: '15', nama: 'Agustiar Tedjo Asputra', gelar: 'S.E', qrCodeValue: '6379215021' },
+            { id: '16', nama: 'M. Ridwan Hasibuan', gelar: 'S.H', qrCodeValue: '5912959911' },
+            { id: '17', nama: 'Indra Supriatna', gelar: 'S.Kom', qrCodeValue: '9374548399' },
+            { id: '18', nama: 'Nanda Faradhitta', gelar: 'A.Md', qrCodeValue: '6477795456' },
+            { id: '19', nama: 'Khaeru nisa', gelar: 'S.Pd', qrCodeValue: '8456764479' },
+            { id: '20', nama: 'Muhammad Imran Aulia', gelar: 'S.P', qrCodeValue: '8593264302' },
+            { id: '21', nama: 'Enjang Seefullah', gelar: 'S.T', qrCodeValue: '8690620015' },
+            { id: '22', nama: 'M. Firdaus Z.S.', gelar: 'Th.I', qrCodeValue: '1046742657' },
+            { id: '23', nama: 'Jepi Prasetyo Ahmad', gelar: 'S.Pd', qrCodeValue: '6484252890' },
+            { id: '24', nama: 'Nandi Hamadi', gelar: 'S.Pd', qrCodeValue: '8771638857' },
+            { id: '25', nama: 'Jimmy Permana Wijaya', gelar: 'S.Si', qrCodeValue: '8597501395' },
+            { id: '26', nama: 'E.Nurhayati', gelar: '', qrCodeValue: '3318982443' },
+            { id: '27', nama: 'Maria Ulfah', gelar: 'S.E', qrCodeValue: '7801262584' },
+            { id: '28', nama: 'Egi Febriansyah', gelar: '', qrCodeValue: '3335887928' },
+            { id: '29', nama: 'Roby Yusup', gelar: '', qrCodeValue: '5440544173' },
+            { id: '30', nama: 'Sulaeman', gelar: '', qrCodeValue: '12062274' }
+        ];
+
+        // Status absensi (menggunakan Set untuk efisiensi pencarian)
+        let scannedQRCodes = new Set();
+        let totalScanned = 0;
+
+        // Fungsi untuk memperbarui ringkasan scan
+        function updateScanSummary() {
+            scanSummaryP.textContent = `Total dipindai: ${totalScanned} dari ${dataNama.length}`;
         }
 
-        function startScanLogic() {
-            scanner = new Instascan.Scanner({ video: video, scanPeriod: 5 }); // scanPeriod dalam ms
+        // Fungsi untuk memuat daftar nama ke UI
+        function loadNames() {
+            nameListUl.innerHTML = ''; // Bersihkan daftar yang ada
+            dataNama.forEach(person => {
+                const li = document.createElement('li');
+                li.id = `person-${person.id}`; // Beri ID unik untuk elemen LI
+                li.innerHTML = `
+                    <span>${person.nama}</span>
+                    <span class="name-details">${person.gelar}</span>
+                `;
+                if (scannedQRCodes.has(person.qrCodeValue)) {
+                    li.classList.add('scanned');
+                }
+                nameListUl.appendChild(li);
+            });
+            updateScanSummary();
+        }
+
+        function startScanner() {
+            errorMessageDiv.textContent = '';
+            scanStatusDiv.textContent = 'Status Pemindaian: Mencoba akses kamera...';
+            startScanButton.disabled = true;
+            stopScanButton.disabled = false;
+
+            if (scanner) { // Jika scanner sudah ada, hentikan dulu
+                scanner.stop();
+            }
+
+            scanner = new Instascan.Scanner({ video: video, scanPeriod: 200, refractoryPeriod: 1000 }); // scanPeriod lebih cepat, refractory untuk menghindari scan berulang terlalu cepat
 
             scanner.addListener('scan', function (content) {
-                resultDiv.textContent = 'Hasil Pindai: ' + content;
-                console.log(content);
-                // Jika Anda ingin menghentikan pemindaian setelah satu kali berhasil:
-                // stopScanner();
+                // Instascan mengembalikan content sebagai string.
+                // Pastikan untuk menghapus spasi atau karakter tak terlihat jika ada masalah kecocokan.
+                const scannedValue = content.trim(); 
+                resultDiv.textContent = `Hasil Pindai Terakhir: ${scannedValue}`;
+                console.log('Barcode/QR Code Dipindai:', scannedValue);
+
+                const foundPerson = dataNama.find(p => p.qrCodeValue === scannedValue);
+
+                if (foundPerson) {
+                    if (!scannedQRCodes.has(scannedValue)) {
+                        scannedQRCodes.add(scannedValue);
+                        totalScanned++;
+                        const listItem = document.getElementById(`person-${foundPerson.id}`);
+                        if (listItem) {
+                            listItem.classList.add('scanned');
+                            // Opsional: Gulir ke elemen yang discan
+                            listItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }
+                        scanStatusDiv.textContent = `Status Pemindaian: ${foundPerson.nama} (${scannedValue}) berhasil dipindai!`;
+                        updateScanSummary();
+                    } else {
+                        scanStatusDiv.textContent = `Status Pemindaian: ${foundPerson.nama} (${scannedValue}) sudah pernah dipindai sebelumnya.`;
+                    }
+                } else {
+                    scanStatusDiv.textContent = `Status Pemindaian: Barcode/QR Code tidak dikenal: "${scannedValue}"`;
+                    // Optional: Beri tahu pengguna jika QR code tidak cocok
+                    console.warn('Barcode/QR Code tidak cocok dengan data yang ada:', scannedValue);
+                }
             });
 
-            Instascan.Camera.getCameras().then(function (cameras) {
+            Instascan.Camera.getCameras().then(function (availableCameras) {
+                cameras = availableCameras;
                 if (cameras.length > 0) {
-                    // Coba kamera pertama, atau Anda bisa berikan pilihan
-                    scanner.start(cameras[0]);
+                    scanner.start(cameras[activeCameraIndex]);
                     startScanButton.style.display = 'none';
                     stopScanButton.style.display = 'inline-block';
-                    resultDiv.textContent = 'Hasil Pindai: Memindai...';
+                    scanStatusDiv.textContent = 'Status Pemindaian: Kamera aktif, arahkan ke Barcode/QR Code angka.';
+                    resultDiv.textContent = 'Hasil Pindai Terakhir: Memindai...';
                 } else {
                     errorMessageDiv.textContent = 'Tidak ada kamera ditemukan di perangkat Anda.';
+                    scanStatusDiv.textContent = 'Status Pemindaian: Gagal, tidak ada kamera.';
                     console.error('No cameras found.');
+                    startScanButton.disabled = false;
+                    stopScanButton.disabled = true;
                 }
             }).catch(function (e) {
-                errorMessageDiv.textContent = 'Gagal mengakses kamera: ' + e;
-                console.error(e);
+                errorMessageDiv.textContent = 'Gagal mengakses kamera. Pastikan Anda mengizinkan akses kamera: ' + e.message;
+                scanStatusDiv.textContent = 'Status Pemindaian: Gagal, periksa izin kamera.';
+                console.error('Error accessing camera:', e);
+                startScanButton.disabled = false;
+                stopScanButton.disabled = true;
             });
         }
 
         function stopScanner() {
             if (scanner) {
                 scanner.stop();
-                scanner = null; // Hapus referensi scanner
+                scanner = null;
                 startScanButton.style.display = 'inline-block';
                 stopScanButton.style.display = 'none';
-                resultDiv.textContent = 'Hasil Pindai: Pemindaian dihentikan.';
+                scanStatusDiv.textContent = 'Status Pemindaian: Pemindaian dihentikan.';
+                resultDiv.textContent = 'Hasil Pindai Terakhir: -';
+                startScanButton.disabled = false;
+                stopScanButton.disabled = true;
             }
         }
 
         startScanButton.addEventListener('click', startScanner);
         stopScanButton.addEventListener('click', stopScanner);
 
-        // Opsional: Coba mulai pemindaian secara otomatis saat halaman dimuat
-        // window.onload = startScanner;
+        // Inisialisasi: Muat daftar nama saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', () => {
+            loadNames();
+            updateScanSummary();
+            stopScanButton.style.display = 'none'; // Pastikan tombol stop tersembunyi di awal
+            startScanButton.disabled = false; // Pastikan tombol start aktif
+        });
+
     </script>
 </body>
 </html>
