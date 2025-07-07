@@ -495,10 +495,9 @@
         // Initialize data if needed
         async function initializeFirebaseData() {
             try {
+                // Updated initialVoters with data from the provided image
                 const initialVoters = [
-                    { name: "Wawan Oktriawan, M.E", token: "9855736291" },
                     { name: "Jumanto, S.T", token: "0016464828" },
-                    { name: "Adi Hermawan, S.T", token: "8846039805" },
                     { name: "Ernawati, S.H", token: "9128250973" },
                     { name: "Lyna Devy F., S.Pd", token: "6971639785" },
                     { name: "Sukarsih, M.Pd", token: "2144333413" },
@@ -522,18 +521,24 @@
                     { name: "Jepi Prasetyo Ahmad, S.Pd", token: "5484252890" },
                     { name: "Nandi Hamadi S.Pd", token: "8771638857" },
                     { name: "Jimmy Permana Wijaya, S.Si", token: "8597501395" },
-                    { name: "Ari Wibawa, S.T", token: "0171447657" }
+                    { name: "E.Nurhayati", token: "3318982443" },
+                    { name: "Maria Ulfah, S.E", token: "7861262584" },
+                    { name: "Egi Febriansyah", token: "3335887928" },
+                    { name: "Roby Yusuf", token: "3440544173" },
+                    { name: "Sulaeman", token: "12062274" }
                 ];
 
-                // Removed "Wawan Oktriawan, M.E" from the initialCandidates list
+                // Initial candidates list, derived from the new voter list, excluding "Wawan Oktriawan, M.E"
                 const initialCandidates = [
-                    "Jumanto, S.T", "Adi Hermawan, S.T", "Ernawati, S.H",
-                    "Lyna Devy F., S.Pd", "Sukarsih, M.Pd", "Sri Wulan, S.Pd", "Nurul Wangsa M., S.Pd",
-                    "Priyo Wiji Utomo, S.Pd", "Sigit Ramdhani, S.T", "Kiki Putra, S.T", "Noval Ridho Pasyola, S.PdI",
-                    "Ellis Hayati, S.Pd", "Neng Leni, S.Kom", "Agt Eko Priyantono M.M", "Agustiar Tedjo Aspurwa, S.E",
-                    "M. Ridwan Hasibuan, S.H", "Indra Supriatna, S.Kom", "Nanda Faradhitta, A.Md", "Khaerunisa, S.Pd",
-                    "Muhammad Imron Aulia, S.P", "Enjang Seefullah, S.T", "M. Firdaus Z.S. Th.I", "Jepi Prasetyo Ahmad, S.Pd",
-                    "Nandi Hamadi S.Pd", "Jimmy Permana Wijaya, S.Si", "Ari Wibawa, S.T"
+                    "Jumanto, S.T", "Ernawati, S.H", "Lyna Devy F., S.Pd",
+                    "Sukarsih, M.Pd", "Sri Wulan, S.Pd", "Nurul Wangsa M., S.Pd",
+                    "Priyo Wiji Utomo, S.Pd", "Sigit Ramdhani, S.T", "Kiki Putra, S.T",
+                    "Noval Ridho Pasyola, S.PdI", "Ellis Hayati, S.Pd", "Neng Leni, S.Kom",
+                    "Agt Eko Priyantono M.M", "Agustiar Tedjo Aspurwa, S.E", "M. Ridwan Hasibuan, S.H",
+                    "Indra Supriatna, S.Kom", "Nanda Faradhitta, A.Md", "Khaerunisa, S.Pd",
+                    "Muhammad Imron Aulia, S.P", "Enjang Seefullah, S.T", "M. Firdaus Z.S. Th.I",
+                    "Jepi Prasetyo Ahmad, S.Pd", "Nandi Hamadi S.Pd", "Jimmy Permana Wijaya, S.Si",
+                    "E.Nurhayati", "Maria Ulfah, S.E", "Egi Febriansyah", "Roby Yusuf", "Sulaeman"
                 ];
 
                 // Check if data exists
@@ -609,7 +614,8 @@
 
                 if (!voterData) {
                     hideLoading();
-                    showError(scannerError, 'Token tidak valid. Silakan periksa QR Code Anda.');
+                    // Changed the error message as per user's request
+                    showError(scannerError, 'Pemilih tidak sesuai. Token tidak valid.');
                     startQRScanner();
                     return;
                 }
@@ -633,7 +639,8 @@
                 votingSection.classList.remove('hidden');
                 
                 hideLoading();
-            } catch (error) {
+            }
+            catch (error) {
                 console.error('Login error:', error);
                 hideLoading();
                 showError(scannerError, 'Terjadi kesalahan saat login. Silakan coba lagi.');
