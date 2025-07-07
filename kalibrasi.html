@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pemindai QR Code</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+        }
+        #video-container {
+            width: 80%;
+            max-width: 500px;
+            background-color: #000;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        video {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 1.2em;
+            color: #333;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 80%;
+            max-width: 500px;
+            word-wrap: break-word; /* Untuk teks panjang */
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #error-message {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Pemindai QR Code</h1>
+    <p>Pastikan kamera Anda diizinkan dan arahkan ke QR Code.</p>
+
+    <div id="video-container">
+        <video id="qr-video"></video>
+    </div>
+
+    <button id="start-scan">Mulai Pindai</button>
+    <button id="stop-scan" style="display: none;">Hentikan Pindai</button>
+
+    <div id="result">Hasil Pindai: Belum ada QR Code terdeteksi</div>
+    <div id="error-message"></div>
+
+    <script src="https://rawgit.com/schmich/instascan/master/instascan.min.js"></script>
+
+    <script>
+        const video = document.getElementById('qr-video');
+        const resultDiv = document.getElementById('result');
+        const startScanButton = document.getElementById('start-scan');
+        const stopScanButton = document.getElementById('stop-scan');
+        const errorMessageDiv = document.getElementById('error-message');
+
+        let scanner;
+
+        function startScanner() {
+            errorMessageDiv.textContent = ''; // Bersihkan pesan error sebelumnya
+            if (scanner) {
+                scanner.stop().then(() => {
+                    startScanLogic();
+                }).catch(err => {
+                    errorMessageDiv.textContent = 'Gagal menghentikan pemindai sebelumnya: ' + err;
+                    console.error('Error stopping scanner:', err);
+                    startScanLogic(); // Coba mulai lagi meski ada error
+                });
+            } else {
+                startScanLogic();
+            }
+        }
+
+        function startScanLogic() {
+            scanner = new Instascan.Scanner({ video: video, scanPeriod: 5 }); // scanPeriod dalam ms
+
+            scanner.addListener('scan', function (content) {
+                resultDiv.textContent = 'Hasil Pindai: ' + content;
+                console.log(content);
+                // Jika Anda ingin menghentikan pemindaian setelah satu kali berhasil:
+                // stopScanner();
+            });
+
+            Instascan.Camera.getCameras().then(function (cameras) {
+                if (cameras.length > 0) {
+                    // Coba kamera pertama, atau Anda bisa berikan pilihan
+                    scanner.start(cameras[0]);
+                    startScanButton.style.display = 'none';
+                    stopScanButton.style.display = 'inline-block';
+                    resultDiv.textContent = 'Hasil Pindai: Memindai...';
+                } else {
+                    errorMessageDiv.textContent = 'Tidak ada kamera ditemukan di perangkat Anda.';
+                    console.error('No cameras found.');
+                }
+            }).catch(function (e) {
+                errorMessageDiv.textContent = 'Gagal mengakses kamera: ' + e;
+                console.error(e);
+            });
+        }
+
+        function stopScanner() {
+            if (scanner) {
+                scanner.stop();
+                scanner = null; // Hapus referensi scanner
+                startScanButton.style.display = 'inline-block';
+                stopScanButton.style.display = 'none';
+                resultDiv.textContent = 'Hasil Pindai: Pemindaian dihentikan.';
+            }
+        }
+
+        startScanButton.addEventListener('click', startScanner);
+        stopScanButton.addEventListener('click', stopScanner);
+
+        // Opsional: Coba mulai pemindaian secara otomatis saat halaman dimuat
+        // window.onload = startScanner;
+    </script>
+</body>
+</html>
