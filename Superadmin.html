@@ -543,7 +543,7 @@
         }
 
         function updateChartAndTable(candidates) {
-            // Filter out "Wawan Oktriawan" if present (as per previous instructions)
+            // Filter out "Wawan Oktriawan" if present (this filter is for candidates, not voters)
             const filteredCandidates = Object.values(candidates).filter(candidate => candidate.name !== "Wawan Oktriawan, M.E");
             const sortedCandidates = filteredCandidates.sort((a, b) => b.votes - a.votes);
             
@@ -652,8 +652,8 @@
                 votingDetailsTableEl.innerHTML = '<tr class="custom-table-row"><td colspan="5" class="text-center text-secondary py-2 px-4">Belum ada suara yang masuk</td></tr>';
             } else {
                 votingDetailsTableEl.innerHTML = sortedVotes.map(vote => {
-                    // Filter out "Wawan Oktriawan" from choices if present
-                    const choices = vote.choices.map(id => candidates[id]?.name || 'Unknown').filter(name => name !== "Wawan Oktriawan, M.E").join(', ');
+                    // Ensure candidates are correctly mapped
+                    const choices = vote.choices.map(id => candidates[id]?.name || 'Unknown').join(', ');
                     const time = new Date(vote.timestamp).toLocaleString('id-ID');
                     return `
                         <tr class="custom-table-row">
@@ -810,7 +810,8 @@
                     { name: "Maria Ulfah, S.E", token: "7861262584" },
                     { name: "Egi Febriansyah", token: "3335887928" },
                     { name: "Roby Yusuf", token: "3440544173" },
-                    { name: "Sulaeman", token: "12062274" }
+                    { name: "Sulaeman", token: "12062274" },
+                    { name: "Wawan Oktriawan, M.E", token: "9855736291" } // Added Wawan Oktriawan as a voter
                 ];
                 initialVoters.forEach(voter => {
                     votersUpdates[voter.token] = { name: voter.name, used: false, votedFor: [] };
