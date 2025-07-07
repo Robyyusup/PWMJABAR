@@ -375,9 +375,9 @@
 
         // Chart update function
         function updateChart(candidates) {
-            // Filter out "Wawan Oktriawan" if present
-            const filteredCandidates = Object.values(candidates).filter(candidate => candidate.name !== "Wawan Oktriawan, M.E");
-            const sortedCandidates = filteredCandidates.sort((a, b) => b.votes - a.votes);
+            // No longer filtering out "Wawan Oktriawan, M.E" explicitly here,
+            // as they should not be in the candidates list if they are a voter.
+            const sortedCandidates = Object.values(candidates).sort((a, b) => b.votes - a.votes);
             
             // Enhanced color palette with dark blue and dark green theme
             const colors = [
