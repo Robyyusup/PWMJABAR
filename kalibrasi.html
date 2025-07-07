@@ -152,11 +152,11 @@
     <div id="name-list-container">
         <h2>Daftar Peserta/Data</h2>
         <p id="scan-summary"></p>
-        <ul id="name-list">
-            </ul>
+        <ul id="name-list"></ul>
     </div>
 
-    <script src="https://rawgit.com/schmich/instascan/master/instascan.min.js"></script>
+    <!-- Instascan Library via CDN -->
+    <script src="https://unpkg.com/instascan@1.0.0/umd/instascan.min.js"></script>
 
     <script>
         const video = document.getElementById('qr-video');
@@ -242,7 +242,7 @@
             scanStatusDiv.textContent = 'Status Pemindaian: Mencoba akses kamera...';
             startScanButton.disabled = true;
             stopScanButton.disabled = false;
-            stopScanButton.style.display = 'none'; // Sembunyikan tombol stop sementara
+            stopScanButton.style.display = 'none';
 
             if (scanner) {
                 scanner.stop();
@@ -253,7 +253,6 @@
             scanner.addListener('scan', function (content) {
                 const scannedValue = content.trim(); 
                 resultDiv.textContent = `Hasil Pindai Terakhir: ${scannedValue}`;
-                console.log('Barcode/QR Code Dipindai:', scannedValue);
 
                 const foundPerson = dataNama.find(p => p.qrCodeValue === scannedValue);
 
@@ -273,7 +272,6 @@
                     }
                 } else {
                     scanStatusDiv.textContent = `Status Pemindaian: Barcode/QR Code tidak dikenal: "${scannedValue}"`;
-                    console.warn('Barcode/QR Code tidak cocok dengan data yang ada:', scannedValue);
                 }
             });
 
@@ -289,23 +287,17 @@
                     displayError('Tidak ada kamera ditemukan di perangkat Anda.');
                 }
             }).catch(function (e) {
-                // Penanganan kesalahan yang lebih spesifik
                 let errorMessage = 'Gagal mengakses kamera.';
                 if (e.name === 'NotAllowedError') {
-                    errorMessage += ' Izin kamera ditolak. Mohon izinkan akses kamera di pengaturan browser.';
+                    errorMessage += ' Izin kamera ditolak.';
                 } else if (e.name === 'NotFoundError' || e.name === 'DevicesNotFoundError') {
-                    errorMessage += ' Tidak ada perangkat kamera yang ditemukan atau terhubung.';
-                } else if (e.name === 'NotReadableError' || e.name === 'TrackStartError') {
-                    errorMessage += ' Kamera sedang digunakan oleh aplikasi lain atau tidak dapat diakses.';
-                } else if (e.name === 'OverconstrainedError') {
-                    errorMessage += ' Konfigurasi kamera tidak cocok (mis. resolusi tidak didukung).';
-                } else if (e.name === 'AbortError') {
-                    errorMessage += ' Operasi kamera dibatalkan.';
+                    errorMessage += ' Tidak ada perangkat kamera.';
+                } else if (e.name === 'NotReadableError') {
+                    errorMessage += ' Kamera sedang digunakan.';
                 } else {
                     errorMessage += ' Kesalahan tidak dikenal: ' + e.message;
                 }
                 displayError(errorMessage);
-                console.error('Detailed camera access error:', e);
             });
         }
 
@@ -331,7 +323,6 @@
             stopScanButton.style.display = 'none';
             startScanButton.disabled = false;
         });
-
     </script>
 </body>
 </html>
