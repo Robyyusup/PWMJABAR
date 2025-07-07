@@ -10,7 +10,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start; /* Start from top */
+            justify-content: flex-start;
             min-height: 100vh;
             margin: 0;
             background-color: #f4f4f4;
@@ -57,7 +57,7 @@
             width: 90%;
             max-width: 500px;
             word-wrap: break-word;
-            min-height: 50px; /* Agar tidak collapse */
+            min-height: 50px;
         }
         button {
             padding: 10px 20px;
@@ -93,12 +93,12 @@
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             padding: 20px;
-            margin-bottom: 40px; /* Ruang bawah */
+            margin-bottom: 40px;
         }
         #name-list {
             list-style: none;
             padding: 0;
-            max-height: 400px; /* Scrollable list */
+            max-height: 400px;
             overflow-y: auto;
             border: 1px solid #eee;
             border-radius: 4px;
@@ -114,8 +114,8 @@
             border-bottom: none;
         }
         #name-list li.scanned {
-            background-color: #e6ffe6; /* Light green */
-            color: #28a745; /* Darker green text */
+            background-color: #e6ffe6;
+            color: #28a745;
             font-weight: bold;
         }
         #name-list li.scanned::after {
@@ -172,10 +172,6 @@
         let cameras = [];
         let activeCameraIndex = 0;
 
-        // =================================================================
-        // DATA NAMA ANDA (Diperbarui dengan angka barcode)
-        // qrCodeValue sekarang adalah string angka yang ada di barcode
-        // =================================================================
         const dataNama = [
             { id: '1', nama: 'Wawan Oktriawan', gelar: 'M.E', qrCodeValue: '9855736291' },
             { id: '2', nama: 'Jumanto', gelar: 'S.T', qrCodeValue: '0016464828' },
@@ -209,21 +205,18 @@
             { id: '30', nama: 'Sulaeman', gelar: '', qrCodeValue: '12062274' }
         ];
 
-        // Status absensi (menggunakan Set untuk efisiensi pencarian)
         let scannedQRCodes = new Set();
         let totalScanned = 0;
 
-        // Fungsi untuk memperbarui ringkasan scan
         function updateScanSummary() {
             scanSummaryP.textContent = `Total dipindai: ${totalScanned} dari ${dataNama.length}`;
         }
 
-        // Fungsi untuk memuat daftar nama ke UI
         function loadNames() {
-            nameListUl.innerHTML = ''; // Bersihkan daftar yang ada
+            nameListUl.innerHTML = '';
             dataNama.forEach(person => {
                 const li = document.createElement('li');
-                li.id = `person-${person.id}`; // Beri ID unik untuk elemen LI
+                li.id = `person-${person.id}`;
                 li.innerHTML = `
                     <span>${person.nama}</span>
                     <span class="name-details">${person.gelar}</span>
@@ -236,21 +229,28 @@
             updateScanSummary();
         }
 
+        function displayError(message) {
+            errorMessageDiv.textContent = 'ERROR: ' + message;
+            console.error('ERROR:', message);
+            scanStatusDiv.textContent = 'Status Pemindaian: GAGAL (lihat pesan ERROR)';
+            startScanButton.disabled = false;
+            stopScanButton.disabled = true;
+        }
+
         function startScanner() {
             errorMessageDiv.textContent = '';
             scanStatusDiv.textContent = 'Status Pemindaian: Mencoba akses kamera...';
             startScanButton.disabled = true;
             stopScanButton.disabled = false;
+            stopScanButton.style.display = 'none'; // Sembunyikan tombol stop sementara
 
-            if (scanner) { // Jika scanner sudah ada, hentikan dulu
+            if (scanner) {
                 scanner.stop();
             }
 
-            scanner = new Instascan.Scanner({ video: video, scanPeriod: 200, refractoryPeriod: 1000 }); // scanPeriod lebih cepat, refractory untuk menghindari scan berulang terlalu cepat
+            scanner = new Instascan.Scanner({ video: video, scanPeriod: 200, refractoryPeriod: 1000 });
 
             scanner.addListener('scan', function (content) {
-                // Instascan mengembalikan content sebagai string.
-                // Pastikan untuk menghapus spasi atau karakter tak terlihat jika ada masalah kecocokan.
                 const scannedValue = content.trim(); 
                 resultDiv.textContent = `Hasil Pindai Terakhir: ${scannedValue}`;
                 console.log('Barcode/QR Code Dipindai:', scannedValue);
@@ -264,7 +264,6 @@
                         const listItem = document.getElementById(`person-${foundPerson.id}`);
                         if (listItem) {
                             listItem.classList.add('scanned');
-                            // Opsional: Gulir ke elemen yang discan
                             listItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                         }
                         scanStatusDiv.textContent = `Status Pemindaian: ${foundPerson.nama} (${scannedValue}) berhasil dipindai!`;
@@ -274,7 +273,6 @@
                     }
                 } else {
                     scanStatusDiv.textContent = `Status Pemindaian: Barcode/QR Code tidak dikenal: "${scannedValue}"`;
-                    // Optional: Beri tahu pengguna jika QR code tidak cocok
                     console.warn('Barcode/QR Code tidak cocok dengan data yang ada:', scannedValue);
                 }
             });
@@ -288,18 +286,26 @@
                     scanStatusDiv.textContent = 'Status Pemindaian: Kamera aktif, arahkan ke Barcode/QR Code angka.';
                     resultDiv.textContent = 'Hasil Pindai Terakhir: Memindai...';
                 } else {
-                    errorMessageDiv.textContent = 'Tidak ada kamera ditemukan di perangkat Anda.';
-                    scanStatusDiv.textContent = 'Status Pemindaian: Gagal, tidak ada kamera.';
-                    console.error('No cameras found.');
-                    startScanButton.disabled = false;
-                    stopScanButton.disabled = true;
+                    displayError('Tidak ada kamera ditemukan di perangkat Anda.');
                 }
             }).catch(function (e) {
-                errorMessageDiv.textContent = 'Gagal mengakses kamera. Pastikan Anda mengizinkan akses kamera: ' + e.message;
-                scanStatusDiv.textContent = 'Status Pemindaian: Gagal, periksa izin kamera.';
-                console.error('Error accessing camera:', e);
-                startScanButton.disabled = false;
-                stopScanButton.disabled = true;
+                // Penanganan kesalahan yang lebih spesifik
+                let errorMessage = 'Gagal mengakses kamera.';
+                if (e.name === 'NotAllowedError') {
+                    errorMessage += ' Izin kamera ditolak. Mohon izinkan akses kamera di pengaturan browser.';
+                } else if (e.name === 'NotFoundError' || e.name === 'DevicesNotFoundError') {
+                    errorMessage += ' Tidak ada perangkat kamera yang ditemukan atau terhubung.';
+                } else if (e.name === 'NotReadableError' || e.name === 'TrackStartError') {
+                    errorMessage += ' Kamera sedang digunakan oleh aplikasi lain atau tidak dapat diakses.';
+                } else if (e.name === 'OverconstrainedError') {
+                    errorMessage += ' Konfigurasi kamera tidak cocok (mis. resolusi tidak didukung).';
+                } else if (e.name === 'AbortError') {
+                    errorMessage += ' Operasi kamera dibatalkan.';
+                } else {
+                    errorMessage += ' Kesalahan tidak dikenal: ' + e.message;
+                }
+                displayError(errorMessage);
+                console.error('Detailed camera access error:', e);
             });
         }
 
@@ -319,12 +325,11 @@
         startScanButton.addEventListener('click', startScanner);
         stopScanButton.addEventListener('click', stopScanner);
 
-        // Inisialisasi: Muat daftar nama saat halaman dimuat
         document.addEventListener('DOMContentLoaded', () => {
             loadNames();
             updateScanSummary();
-            stopScanButton.style.display = 'none'; // Pastikan tombol stop tersembunyi di awal
-            startScanButton.disabled = false; // Pastikan tombol start aktif
+            stopScanButton.style.display = 'none';
+            startScanButton.disabled = false;
         });
 
     </script>
