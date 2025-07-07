@@ -271,6 +271,10 @@
                 <div class="stats-number" id="participationRate">0%</div>
                 <div class="stats-label"> Tingkat Partisipasi</div>
             </div>
+            <div class="stats-card">
+                <div class="stats-number" id="totalVotesCast">0</div>
+                <div class="stats-label"> Total Suara Terkumpul</div>
+            </div>
         </div>
 
         <!-- Chart -->
@@ -322,6 +326,7 @@
         const totalVotersEl = document.getElementById('totalVoters');
         const votedCountEl = document.getElementById('votedCount');
         const participationRateEl = document.getElementById('participationRate');
+        const totalVotesCastEl = document.getElementById('totalVotesCast'); // New element for total votes cast
         const resultsChartEl = document.getElementById('resultsChart');
         const lastUpdateEl = document.getElementById('lastUpdate');
 
@@ -495,10 +500,14 @@
                 // Calculate statistics
                 const votedCount = Object.values(voters).filter(voter => voter.used).length;
                 const participationRate = totalVoters > 0 ? Math.round((votedCount / totalVoters) * 100) : 0;
+                
+                // Calculate total votes cast by summing votes from all candidates
+                const totalVotesCast = Object.values(candidates).reduce((sum, candidate) => sum + (candidate.votes || 0), 0);
 
                 // Update statistics with animation
                 animateNumber(totalVotersEl, totalVoters);
                 animateNumber(votedCountEl, votedCount);
+                animateNumber(totalVotesCastEl, totalVotesCast); // Update total votes cast
                 
                 // Animate percentage
                 const currentRate = parseInt(participationRateEl.textContent) || 0;
