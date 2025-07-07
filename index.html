@@ -496,7 +496,7 @@
         // Initialize data if needed
         async function initializeFirebaseData() {
             try {
-                // Updated initialVoters with data from the provided image
+                // Updated initialVoters with data from the provided image and "Wawan Oktriawan, M.E"
                 const initialVoters = [
                     { name: "Jumanto, S.T", token: "0016464828" },
                     { name: "Ernawati, S.H", token: "9128250973" },
@@ -526,10 +526,11 @@
                     { name: "Maria Ulfah, S.E", token: "7861262584" },
                     { name: "Egi Febriansyah", token: "3335887928" },
                     { name: "Roby Yusuf", token: "3440544173" },
-                    { name: "Sulaeman", token: "12062274" }
+                    { name: "Sulaeman", token: "12062274" },
+                    { name: "Wawan Oktriawan, M.E", token: "9855736291" } // Added Wawan Oktriawan as a voter
                 ];
 
-                // Initial candidates list, derived from the new voter list, excluding "Wawan Oktriawan, M.E"
+                // Initial candidates list (Wawan Oktriawan, M.E is NOT in this list)
                 const initialCandidates = [
                     "Jumanto, S.T", "Ernawati, S.H", "Lyna Devy F., S.Pd",
                     "Sukarsih, M.Pd", "Sri Wulan, S.Pd", "Nurul Wangsa M., S.Pd",
