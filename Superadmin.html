@@ -4,10 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Superadmin E-Voting</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Bootstrap CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" xintegrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <!-- Bootstrap Icons CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- jsPDF CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- html2canvas CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <style>
@@ -21,86 +28,35 @@
         
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #1e3a8a 0%, #064e3b 100%);
+            background: linear-gradient(135deg, #1e3a8a 0%, #064e3b 100%); /* Dark Blue to Dark Green */
             min-height: 100vh;
             color: #1a202c;
         }
         
+        /* Custom styles to maintain previous design elements or for specific needs */
         .glass-effect {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
-        .gradient-bg {
-            background: linear-gradient(135deg, #1e3a8a 0%, #064e3b 100%);
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+        .header-gradient {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
             color: white;
-            padding: 12px 24px;
-            border-radius: 12px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(30, 58, 138, 0.4);
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(30, 58, 138, 0.6);
-            background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
-        }
-        
-        .btn-secondary {
-            background: linear-gradient(135deg, #064e3b 0%, #047857 100%);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 12px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(6, 78, 59, 0.4);
-        }
-        
-        .btn-secondary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(6, 78, 59, 0.6);
-            background: linear-gradient(135deg, #047857 0%, #059669 100%);
-        }
-        
-        .btn-danger {
-            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 12px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
-        }
-        
-        .btn-danger:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(220, 38, 38, 0.6);
-        }
-        
-        .card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
+            padding: 32px;
             border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
+            text-align: center;
+            margin-bottom: 32px;
+            box-shadow: 0 8px 32px rgba(30, 41, 59, 0.3);
         }
         
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        .stats-card {
+            background: linear-gradient(135deg, #1e3a8a 0%, #064e3b 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(30, 58, 138, 0.3);
         }
         
         .spinner {
@@ -139,191 +95,238 @@
             justify-content: center;
         }
         
-        .modal-content {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            transform: scale(0.9);
-            transition: transform 0.3s ease;
-        }
-        
-        .modal-overlay.active .modal-content {
-            transform: scale(1);
-        }
-        
-        .stats-card {
-            background: linear-gradient(135deg, #1e3a8a 0%, #064e3b 100%);
-            color: white;
-            border-radius: 16px;
-            padding: 24px;
-            text-align: center;
-            box-shadow: 0 8px 32px rgba(30, 58, 138, 0.3);
-        }
-        
-        .table-container {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
-        
-        .table-header {
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            padding: 16px;
-            font-weight: 600;
-            color: #475569;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        
-        .table-row {
-            padding: 16px;
-            border-bottom: 1px solid #f1f5f9;
-            transition: background-color 0.2s ease;
-        }
-        
-        .table-row:hover {
-            background: #f8fafc;
-        }
-        
-        input[type="text"], input[type="password"] {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.9);
-        }
-        
-        input[type="text"]:focus, input[type="password"]:focus {
-            outline: none;
-            border-color: #1e3a8a;
-            box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
-        }
-        
-        .header-gradient {
-            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-            color: white;
-            padding: 32px;
-            border-radius: 20px;
-            text-align: center;
-            margin-bottom: 32px;
-            box-shadow: 0 8px 32px rgba(30, 41, 59, 0.3);
-        }
-        
         .chart-container {
             background: rgba(255, 255, 255, 0.95);
             border-radius: 16px;
             padding: 24px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
+
+        /* Custom button styles for gradients, using Bootstrap's base .btn */
+        .btn-custom-primary {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 15px rgba(30, 58, 138, 0.4);
+            transition: all 0.3s ease;
+        }
+        .btn-custom-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(30, 58, 138, 0.6);
+            background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+            color: white; /* Ensure text color remains white on hover */
+        }
+        
+        .btn-custom-secondary {
+            background: linear-gradient(135deg, #064e3b 0%, #047857 100%);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 15px rgba(6, 78, 59, 0.4);
+            transition: all 0.3s ease;
+        }
+        .btn-custom-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(6, 78, 59, 0.6);
+            background: linear-gradient(135deg, #047857 0%, #059669 100%);
+            color: white;
+        }
+        
+        .btn-custom-danger {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+            transition: all 0.3s ease;
+        }
+        .btn-custom-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(220, 38, 38, 0.6);
+            color: white;
+        }
+
+        .btn-custom-warning {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            border: none;
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+            transition: all 0.3s ease;
+        }
+        .btn-custom-warning:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+            color: white;
+        }
+
+        /* Override Bootstrap's default border-radius for buttons to match previous design */
+        .btn {
+            border-radius: 12px !important;
+        }
+        .btn-sm {
+            border-radius: 8px !important;
+        }
+
+        /* Custom styling for tables to match previous design aesthetics */
+        .custom-table-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        .custom-table-header {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            font-weight: 600;
+            color: #475569;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .custom-table-row {
+            border-bottom: 1px solid #f1f5f9;
+            transition: background-color 0.2s ease;
+        }
+        .custom-table-row:hover {
+            background: #f8fafc;
+        }
     </style>
 </head>
 <body>
-    <div class="min-h-screen p-6">
-        <div class="max-w-7xl mx-auto">
+    <div class="min-vh-100 p-4">
+        <div class="container-fluid">
             <!-- Header -->
-            <div class="header-gradient fade-in">
-                <h1 class="text-3xl font-bold mb-2">Dashboard Superadmin E-Voting</h1>
-                <p class="text-lg opacity-90">Pimpinan Wilayah Muhammadiyah Jawa Barat</p>
+            <div class="header-gradient fade-in mb-4 p-4 rounded-4 shadow-lg">
+                <h1 class="fs-2 fw-bold mb-2">Dashboard Superadmin E-Voting</h1>
+                <p class="fs-5 opacity-90">Pimpinan Wilayah Muhammadiyah Jawa Barat</p>
             </div>
 
             <!-- Loading Overlay -->
-            <div id="loadingOverlay" class="modal-overlay hidden">
-                <div class="flex items-center space-x-4 bg-white rounded-2xl p-8 shadow-2xl">
-                    <div class="spinner"></div>
-                    <p class="text-lg font-medium text-gray-700">Memuat data...</p>
+            <div id="loadingOverlay" class="modal-overlay d-none">
+                <div class="d-flex align-items-center bg-white rounded-4 p-4 shadow-lg">
+                    <div class="spinner me-3"></div>
+                    <p class="fs-5 fw-medium text-secondary mb-0">Memuat data...</p>
                 </div>
             </div>
 
-            <!-- Message Container -->
-            <div id="messageContainer" class="hidden"></div>
+            <!-- Message Container (for toasts/alerts) -->
+            <div id="messageContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 1050;"></div>
 
             <!-- Login Section -->
-            <div id="loginSection" class="max-w-md mx-auto">
-                <div class="card p-8 fade-in">
-                    <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">Login Superadmin</h2>
-                    <form id="loginForm" class="space-y-6">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
-                            <input type="text" id="username" placeholder="Masukkan username" required>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
-                            <input type="password" id="password" placeholder="Masukkan password" required>
-                        </div>
-                        <button type="submit" class="btn-primary w-full text-lg py-4">
-                            Masuk ke Dashboard
-                        </button>
-                    </form>
-                    <p id="loginError" class="text-red-600 text-center mt-4 hidden"></p>
+            <div id="loginSection" class="row justify-content-center">
+                <div class="col-md-6 col-lg-4">
+                    <div class="card p-4 fade-in rounded-4 shadow">
+                        <h2 class="fs-3 fw-bold text-center mb-4 text-dark">Login Superadmin</h2>
+                        <form id="loginForm" class="needs-validation" novalidate>
+                            <div class="mb-3">
+                                <label for="username" class="form-label text-secondary">Username</label>
+                                <input type="text" class="form-control rounded-3 p-3" id="username" placeholder="Masukkan username" required>
+                                <div class="invalid-feedback">
+                                    Silakan masukkan username.
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label for="password" class="form-label text-secondary">Password</label>
+                                <input type="password" class="form-control rounded-3 p-3" id="password" placeholder="Masukkan password" required>
+                                <div class="invalid-feedback">
+                                    Silakan masukkan password.
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-custom-primary w-100 fs-5 py-3 rounded-4">
+                                Masuk ke Dashboard
+                            </button>
+                        </form>
+                        <p id="loginError" class="text-danger text-center mt-3 d-none"></p>
+                    </div>
                 </div>
             </div>
 
             <!-- Dashboard Section -->
-            <div id="dashboardSection" class="hidden">
+            <div id="dashboardSection" class="d-none">
                 <!-- Welcome Message -->
-                <div class="card p-6 mb-8 fade-in">
-                    <h2 class="text-2xl font-bold text-center text-gray-800">Selamat Datang, Superadmin!</h2>
-                    <p class="text-center text-gray-600 mt-2">Kelola sistem e-voting dengan mudah dan aman</p>
+                <div class="card p-4 mb-4 fade-in rounded-4 shadow">
+                    <h2 class="fs-3 fw-bold text-center text-dark">Selamat Datang, Superadmin!</h2>
+                    <p class="text-center text-secondary mt-2">Kelola sistem e-voting dengan mudah dan aman</p>
                 </div>
 
                 <!-- Statistics Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div class="stats-card fade-in">
-                        <div class="text-3xl font-bold mb-2" id="totalVoters">0</div>
-                        <div class="text-sm opacity-90">Total Pemilih</div>
+                <div class="row g-4 mb-4">
+                    <div class="col-md-4">
+                        <div class="stats-card fade-in rounded-4 shadow-sm">
+                            <div class="fs-2 fw-bold mb-2" id="totalVoters">0</div>
+                            <div class="fs-6 opacity-90">Total Pemilih</div>
+                        </div>
                     </div>
-                    <div class="stats-card fade-in">
-                        <div class="text-3xl font-bold mb-2" id="votedCount">0</div>
-                        <div class="text-sm opacity-90">Sudah Memilih</div>
+                    <div class="col-md-4">
+                        <div class="stats-card fade-in rounded-4 shadow-sm">
+                            <div class="fs-2 fw-bold mb-2" id="votedCount">0</div>
+                            <div class="fs-6 opacity-90">Sudah Memilih</div>
+                        </div>
                     </div>
-                    <div class="stats-card fade-in">
-                        <div class="text-3xl font-bold mb-2" id="remainingCount">0</div>
-                        <div class="text-sm opacity-90">Belum Memilih</div>
+                    <div class="col-md-4">
+                        <div class="stats-card fade-in rounded-4 shadow-sm">
+                            <div class="fs-2 fw-bold mb-2" id="remainingCount">0</div>
+                            <div class="fs-6 opacity-90">Belum Memilih</div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Charts and Data -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <div class="row g-4 mb-4">
                     <!-- Results Chart -->
-                    <div class="chart-container fade-in">
-                        <h3 class="text-xl font-bold mb-4 text-gray-800">Hasil Pemilihan Real-time</h3>
-                        <div class="h-96">
-                            <canvas id="resultsChart"></canvas>
+                    <div class="col-lg-6">
+                        <div class="chart-container fade-in rounded-4 shadow">
+                            <h3 class="fs-4 fw-bold mb-4 text-dark">Hasil Pemilihan Real-time</h3>
+                            <div class="chart-wrapper" style="height: 380px;">
+                                <canvas id="resultsChart"></canvas>
+                            </div>
+                            <!-- Candidate Results Table -->
+                            <div class="custom-table-container mt-4">
+                                <h4 class="custom-table-header py-3 px-4 fs-6">Rincian Perolehan Suara Calon</h4>
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th class="py-2 px-4 text-start text-secondary">Calon</th>
+                                                <th class="py-2 px-4 text-start text-secondary">Suara</th>
+                                                <th class="py-2 px-4 text-start text-secondary">Persentase</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="candidateResultsTable">
+                                            <tr><td colspan="3" class="py-2 px-4 text-center text-secondary">Memuat data...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Unvoted List -->
-                    <div class="card p-6 fade-in">
-                        <h3 class="text-xl font-bold mb-4 text-gray-800">Pemilih Belum Memberikan Suara</h3>
-                        <div class="max-h-96 overflow-y-auto">
-                            <ul id="unvotedList" class="space-y-2">
-                                <li class="text-gray-500">Memuat data...</li>
-                            </ul>
+                    <div class="col-lg-6">
+                        <div class="card p-4 fade-in rounded-4 shadow">
+                            <h3 class="fs-4 fw-bold mb-4 text-dark">Pemilih Belum Memberikan Suara</h3>
+                            <div class="overflow-auto" style="max-height: 400px;">
+                                <ul id="unvotedList" class="list-unstyled mb-0">
+                                    <li class="text-secondary">Memuat data...</li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Voting Details Table -->
-                <div class="card p-6 mb-8 fade-in">
-                    <h3 class="text-xl font-bold mb-4 text-gray-800">Detail Pilihan Pemilih</h3>
-                    <div class="table-container">
-                        <div class="overflow-x-auto">
-                            <table class="w-full">
+                <div class="card p-4 mb-4 fade-in rounded-4 shadow">
+                    <h3 class="fs-4 fw-bold mb-4 text-dark">Detail Pilihan Pemilih</h3>
+                    <div class="custom-table-container">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
                                 <thead>
-                                    <tr class="table-header">
-                                        <th class="text-left">Nama Pemilih</th>
-                                        <th class="text-left">Pilihan</th>
-                                        <th class="text-left">Waktu</th>
+                                    <tr class="custom-table-header">
+                                        <th class="text-start py-2 px-4">Nama Pemilih</th>
+                                        <th class="text-start py-2 px-4">Token Pemilih</th>
+                                        <th class="text-start py-2 px-4">Pilihan</th>
+                                        <th class="text-start py-2 px-4">Waktu</th>
+                                        <th class="text-start py-2 px-4">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody id="votingDetailsTable">
-                                    <tr class="table-row">
-                                        <td colspan="3" class="text-center text-gray-500">Memuat data...</td>
+                                    <tr class="custom-table-row">
+                                        <td colspan="5" class="text-center text-secondary py-2 px-4">Memuat data...</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -332,24 +335,46 @@
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="flex flex-col sm:flex-row gap-4 justify-center fade-in">
-                    <button id="exportPdfBtn" class="btn-secondary px-8 py-4 text-lg">
+                <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center fade-in">
+                    <button id="exportPdfBtn" class="btn btn-custom-secondary px-5 py-3 fs-5 rounded-4">
                          Ekspor Laporan PDF
                     </button>
-                    <button id="resetDataBtn" class="btn-danger px-8 py-4 text-lg">
+                    <button id="resetDataBtn" class="btn btn-custom-danger px-5 py-3 fs-5 rounded-4">
                          Reset Semua Data
                     </button>
                 </div>
 
                 <!-- Auto-refresh indicator -->
-                <div class="text-center mt-6">
-                    <p class="text-sm text-gray-500">
+                <div class="text-center mt-4">
+                    <p class="text-secondary fs-6">
                          Data diperbarui otomatis setiap 5 detik
                     </p>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Bootstrap Modal for Confirmation Dialog -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 shadow">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-dark" id="confirmModalLabel">Konfirmasi</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-secondary" id="confirmModalBody">
+                    <!-- Message will be inserted here -->
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal" id="confirmModalCancel">Batal</button>
+                    <button type="button" class="btn btn-danger rounded-3" id="confirmModalConfirm">Ya, Lanjutkan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle (includes Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 
     <script>
         // Firebase Configuration
@@ -386,6 +411,7 @@
         const votedCountEl = document.getElementById('votedCount');
         const remainingCountEl = document.getElementById('remainingCount');
         const resultsChartEl = document.getElementById('resultsChart');
+        const candidateResultsTableEl = document.getElementById('candidateResultsTable');
         const unvotedListEl = document.getElementById('unvotedList');
         const votingDetailsTableEl = document.getElementById('votingDetailsTable');
         const exportPdfBtn = document.getElementById('exportPdfBtn');
@@ -393,52 +419,57 @@
 
         // Utility Functions
         function showLoading() {
-            loadingOverlay.classList.remove('hidden');
+            loadingOverlay.classList.remove('d-none');
         }
 
         function hideLoading() {
-            loadingOverlay.classList.add('hidden');
+            loadingOverlay.classList.add('d-none');
         }
 
         function showMessage(message, type = 'info') {
             const messageEl = document.createElement('div');
-            messageEl.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
-                type === 'success' ? 'bg-green-500 text-white' :
-                type === 'error' ? 'bg-red-500 text-white' :
-                'bg-blue-500 text-white'
-            }`;
-            messageEl.textContent = message;
+            messageEl.className = `alert alert-${
+                type === 'success' ? 'success' :
+                type === 'error' ? 'danger' :
+                'info'
+            } alert-dismissible fade show rounded-3 shadow-sm mb-2`;
+            messageEl.setAttribute('role', 'alert');
+            messageEl.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
             messageContainer.appendChild(messageEl);
 
+            // Auto-remove after 5 seconds
             setTimeout(() => {
-                messageEl.remove();
+                const bsAlert = new bootstrap.Alert(messageEl);
+                bsAlert.close();
             }, 5000);
         }
 
         function showConfirmDialog(message) {
             return new Promise((resolve) => {
-                const overlay = document.createElement('div');
-                overlay.className = 'modal-overlay active';
-                overlay.innerHTML = `
-                    <div class="modal-content">
-                        <h3 class="text-xl font-bold mb-4">Konfirmasi</h3>
-                        <p class="text-gray-600 mb-6">${message}</p>
-                        <div class="flex gap-4 justify-end">
-                            <button class="btn-secondary" onclick="this.closest('.modal-overlay').remove(); resolve(false);">Batal</button>
-                            <button class="btn-danger" onclick="this.closest('.modal-overlay').remove(); resolve(true);">Ya, Lanjutkan</button>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(overlay);
+                const confirmModalElement = document.getElementById('confirmModal');
+                const confirmModal = new bootstrap.Modal(confirmModalElement);
+                document.getElementById('confirmModalBody').textContent = message;
 
-                overlay.querySelector('.btn-secondary').onclick = () => {
-                    overlay.remove();
-                    resolve(false);
-                };
-                overlay.querySelector('.btn-danger').onclick = () => {
-                    overlay.remove();
+                const confirmBtn = document.getElementById('confirmModalConfirm');
+                const cancelBtn = document.getElementById('confirmModalCancel');
+
+                // Clear previous event listeners to prevent multiple triggers
+                confirmBtn.onclick = null;
+                cancelBtn.onclick = null;
+
+                confirmBtn.onclick = () => {
+                    confirmModal.hide();
                     resolve(true);
                 };
+                cancelBtn.onclick = () => {
+                    confirmModal.hide();
+                    resolve(false);
+                };
+
+                confirmModal.show();
             });
         }
 
@@ -448,21 +479,31 @@
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
 
+            // Bootstrap form validation
+            if (!loginForm.checkValidity()) {
+                e.stopPropagation();
+                loginForm.classList.add('was-validated');
+                return;
+            }
+            loginForm.classList.remove('was-validated'); // Reset validation state
+
             if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-                loginSection.classList.add('hidden');
-                dashboardSection.classList.remove('hidden');
+                loginSection.classList.add('d-none');
+                dashboardSection.classList.remove('d-none');
                 startDashboardUpdates();
                 showMessage('Login berhasil! Selamat datang, Superadmin.', 'success');
             } else {
                 loginError.textContent = 'Username atau password salah!';
-                loginError.classList.remove('hidden');
-                showMessage('Login gagal! Periksa kembali kredensial Anda.', 'error');
+                loginError.classList.remove('d-none');
+                showMessage('Login gagal! Periksa kembali kredensial Anda.', 'danger');
             }
         });
 
         // Dashboard data updates
         async function updateDashboardData() {
             try {
+                showLoading();
+
                 // Get all data from Firebase
                 const [votersSnapshot, candidatesSnapshot, votesSnapshot, totalVotersSnapshot] = await Promise.all([
                     database.ref('voters').once('value'),
@@ -484,8 +525,8 @@
                 votedCountEl.textContent = votedCount;
                 remainingCountEl.textContent = remainingCount;
 
-                // Update chart
-                updateChart(candidates);
+                // Update chart and candidate results table
+                updateChartAndTable(candidates);
 
                 // Update unvoted list
                 updateUnvotedList(voters);
@@ -495,12 +536,14 @@
 
             } catch (error) {
                 console.error('Error updating dashboard:', error);
-                showMessage('Gagal memperbarui data dashboard', 'error');
+                showMessage('Gagal memperbarui data dashboard', 'danger');
+            } finally {
+                hideLoading();
             }
         }
 
-        function updateChart(candidates) {
-            // Filter out "Wawan Oktriawan" if present
+        function updateChartAndTable(candidates) {
+            // Filter out "Wawan Oktriawan" if present (as per previous instructions)
             const filteredCandidates = Object.values(candidates).filter(candidate => candidate.name !== "Wawan Oktriawan, M.E");
             const sortedCandidates = filteredCandidates.sort((a, b) => b.votes - a.votes);
             
@@ -514,6 +557,8 @@
                 'rgba(14, 165, 233, 0.8)',  // Sky
                 'rgba(34, 197, 94, 0.8)'    // Green
             ];
+
+            const totalVotes = sortedCandidates.reduce((sum, c) => sum + (c.votes || 0), 0);
 
             const data = {
                 labels: sortedCandidates.map(c => c.name),
@@ -538,6 +583,15 @@
                         text: 'Klasemen Hasil Pemilihan',
                         font: { size: 16, weight: 'bold' },
                         color: '#374151'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.parsed.x;
+                                const percentage = totalVotes > 0 ? ((value / totalVotes) * 100).toFixed(2) : 0;
+                                return `Suara: ${value} (${percentage}%)`;
+                            }
+                        }
                     }
                 },
                 scales: {
@@ -558,41 +612,103 @@
                 chartInstance.destroy();
             }
             chartInstance = new Chart(resultsChartEl, { type: 'bar', data, options });
+
+            // Update Candidate Results Table
+            if (sortedCandidates.length === 0) {
+                candidateResultsTableEl.innerHTML = '<tr><td colspan="3" class="py-2 px-4 text-center text-secondary">Belum ada suara yang masuk</td></tr>';
+            } else {
+                candidateResultsTableEl.innerHTML = sortedCandidates.map(c => {
+                    const percentage = totalVotes > 0 ? ((c.votes / totalVotes) * 100).toFixed(2) : 0;
+                    return `
+                        <tr class="custom-table-row">
+                            <td class="py-2 px-4 text-dark fw-medium">${c.name}</td>
+                            <td class="py-2 px-4 text-secondary">${c.votes}</td>
+                            <td class="py-2 px-4 text-secondary">${percentage}%</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
         }
 
         function updateUnvotedList(voters) {
-            const unvotedVoters = Object.values(voters).filter(voter => !voter.used);
+            const unvotedVoters = Object.entries(voters).filter(([token, voter]) => !voter.used);
             
             if (unvotedVoters.length === 0) {
-                unvotedListEl.innerHTML = '<li class="text-green-600 font-medium">🎉 Semua pemilih sudah memberikan suara!</li>';
+                unvotedListEl.innerHTML = '<li class="text-success fw-medium p-2 rounded-3 bg-light"><i class="bi bi-check-circle-fill me-2"></i>🎉 Semua pemilih sudah memberikan suara!</li>';
             } else {
-                unvotedListEl.innerHTML = unvotedVoters.map(voter => 
-                    `<li class="flex items-center space-x-2 p-2 bg-yellow-50 rounded-lg">
-                        <span class="w-2 h-2 bg-yellow-400 rounded-full"></span>
-                        <span class="text-gray-700">${voter.name}</span>
+                unvotedListEl.innerHTML = unvotedVoters.map(([token, voter]) => 
+                    `<li class="d-flex align-items-center justify-content-between p-2 mb-2 bg-warning bg-opacity-10 rounded-3">
+                        <span class="text-dark"><i class="bi bi-person-x-fill me-2 text-danger"></i>${voter.name} <span class="text-muted small">(${token})</span></span>
+                        <button class="btn btn-custom-warning btn-sm" onclick="resetSingleToken('${token}', '${voter.name}', false)">Reset</button>
                     </li>`
                 ).join('');
             }
         }
 
-        function updateVotingDetailsTable(votes, candidates) {
+        async function updateVotingDetailsTable(votes, candidates) {
             const sortedVotes = Object.values(votes).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
             
             if (sortedVotes.length === 0) {
-                votingDetailsTableEl.innerHTML = '<tr class="table-row"><td colspan="3" class="text-center text-gray-500">Belum ada suara yang masuk</td></tr>';
+                votingDetailsTableEl.innerHTML = '<tr class="custom-table-row"><td colspan="5" class="text-center text-secondary py-2 px-4">Belum ada suara yang masuk</td></tr>';
             } else {
                 votingDetailsTableEl.innerHTML = sortedVotes.map(vote => {
                     // Filter out "Wawan Oktriawan" from choices if present
                     const choices = vote.choices.map(id => candidates[id]?.name || 'Unknown').filter(name => name !== "Wawan Oktriawan, M.E").join(', ');
                     const time = new Date(vote.timestamp).toLocaleString('id-ID');
                     return `
-                        <tr class="table-row">
-                            <td class="font-medium text-gray-900">${vote.voterName}</td>
-                            <td class="text-gray-700">${choices}</td>
-                            <td class="text-gray-500 text-sm">${time}</td>
+                        <tr class="custom-table-row">
+                            <td class="fw-medium text-dark py-2 px-4">${vote.voterName}</td>
+                            <td class="text-secondary font-monospace py-2 px-4">${vote.voterToken}</td>
+                            <td class="text-secondary py-2 px-4">${choices}</td>
+                            <td class="text-secondary py-2 px-4">${time}</td>
+                            <td class="py-2 px-4">
+                                <button class="btn btn-custom-warning btn-sm" onclick="resetSingleToken('${vote.voterToken}', '${vote.voterName}', true, '${vote.timestamp}', [${vote.choices.map(c => `'${c}'`).join(',')}])">Reset</button>
+                            </td>
                         </tr>
                     `;
                 }).join('');
+            }
+        }
+
+        async function resetSingleToken(token, voterName, hasVoted, timestamp = null, votedChoices = []) {
+            const confirmMessage = hasVoted 
+                ? `Apakah Anda yakin ingin mereset token '${token}' (${voterName})? Ini akan menghapus suara yang sudah diberikan dan memungkinkan pemilih untuk memilih lagi.`
+                : `Apakah Anda yakin ingin mereset token '${token}' (${voterName})? Ini akan memungkinkan pemilih untuk menggunakan token ini.`;
+            
+            const confirmed = await showConfirmDialog(confirmMessage);
+            if (!confirmed) return;
+
+            showLoading();
+            try {
+                // If the voter has already voted, deduct their votes from candidates
+                if (hasVoted && votedChoices.length > 0) {
+                    const candidatesRef = database.ref('candidates');
+                    const updates = {};
+                    for (const candidateId of votedChoices) {
+                        const candidateSnapshot = await candidatesRef.child(candidateId).once('value');
+                        const currentVotes = candidateSnapshot.val()?.votes || 0;
+                        updates[`${candidateId}/votes`] = Math.max(0, currentVotes - 1); // Ensure votes don't go below zero
+                    }
+                    await candidatesRef.update(updates);
+
+                    // Remove the specific vote entry
+                    const voteId = `${timestamp}-${token}`; // Reconstruct voteId
+                    await database.ref(`votes/${voteId}`).remove();
+                }
+
+                // Reset voter status
+                await database.ref(`voters/${token}`).update({
+                    used: false,
+                    votedFor: []
+                });
+
+                showMessage(`Token '${token}' (${voterName}) berhasil direset!`, 'success');
+                updateDashboardData(); // Refresh dashboard
+            } catch (error) {
+                console.error('Error resetting token:', error);
+                showMessage(`Gagal mereset token '${token}': ${error.message}`, 'danger');
+            } finally {
+                hideLoading();
             }
         }
 
@@ -609,10 +725,13 @@
                 exportPdfBtn.style.display = 'none';
                 resetDataBtn.style.display = 'none';
 
-                const canvas = await html2canvas(dashboardSection, {
+                const dashboardContent = document.getElementById('dashboardSection');
+                const canvas = await html2canvas(dashboardContent, {
                     scale: 2,
                     useCORS: true,
-                    logging: false
+                    logging: false,
+                    windowWidth: dashboardContent.scrollWidth,
+                    windowHeight: dashboardContent.scrollHeight
                 });
 
                 const { jsPDF } = window.jspdf;
@@ -642,7 +761,7 @@
                 resetDataBtn.style.display = '';
             } catch (error) {
                 console.error('Error exporting PDF:', error);
-                showMessage('Gagal mengekspor PDF', 'error');
+                showMessage('Gagal mengekspor PDF', 'danger');
             } finally {
                 hideLoading();
             }
@@ -660,31 +779,58 @@
                 const votersSnapshot = await database.ref('voters').once('value');
                 const voters = votersSnapshot.val() || {};
                 const votersUpdates = {};
-                Object.keys(voters).forEach(token => {
-                    votersUpdates[token] = {
-                        name: voters[token].name,
-                        used: false,
-                        votedFor: []
-                    };
+                // Re-initialize initial voters from the original list to ensure consistency
+                // This initialVoters array is derived directly from the image you provided.
+                const initialVoters = [
+                    { name: "Jumanto, S.T", token: "0016464828" },
+                    { name: "Ernawati, S.H", token: "9128250973" },
+                    { name: "Lyna Devy F., S.Pd", token: "6971639785" },
+                    { name: "Sukarsih, M.Pd", token: "2144333413" },
+                    { name: "Sri Wulan, S.Pd", token: "8801069675" },
+                    { name: "Nurul Wangsa M., S.Pd", token: "4815123510" },
+                    { name: "Priyo Wiji Utomo, S.Pd", token: "0351915697" },
+                    { name: "Sigit Ramdhani, S.T", token: "4290999891" },
+                    { name: "Kiki Putra, S.T", token: "8855950227" },
+                    { name: "Noval Ridho Pasyola, S.PdI", token: "4251117062" },
+                    { name: "Ellis Hayati, S.Pd", token: "5795769291" },
+                    { name: "Neng Leni, S.Kom", token: "3384148766" },
+                    { name: "Agt Eko Priyantono M.M", token: "5067064548" },
+                    { name: "Agustiar Tedjo Aspurwa, S.E", token: "6379215021" },
+                    { name: "M. Ridwan Hasibuan, S.H", token: "5912959911" },
+                    { name: "Indra Supriatna, S.Kom", token: "9374548399" },
+                    { name: "Nanda Faradhitta, A.Md", token: "6477795456" },
+                    { name: "Khaerunisa, S.Pd", token: "8456764479" },
+                    { name: "Muhammad Imron Aulia, S.P", token: "8593264302" },
+                    { name: "Enjang Seefullah, S.T", token: "8690620015" },
+                    { name: "M. Firdaus Z.S. Th.I", token: "1046742657" },
+                    { name: "Jepi Prasetyo Ahmad, S.Pd", token: "5484252890" },
+                    { name: "Nandi Hamadi S.Pd", token: "8771638857" },
+                    { name: "Jimmy Permana Wijaya, S.Si", token: "8597501395" },
+                    { name: "E.Nurhayati", token: "3318982443" },
+                    { name: "Maria Ulfah, S.E", token: "7861262584" },
+                    { name: "Egi Febriansyah", token: "3335887928" },
+                    { name: "Roby Yusuf", token: "3440544173" },
+                    { name: "Sulaeman", token: "12062274" }
+                ];
+                initialVoters.forEach(voter => {
+                    votersUpdates[voter.token] = { name: voter.name, used: false, votedFor: [] };
                 });
-                await database.ref('voters').update(votersUpdates);
+                await database.ref('voters').set(votersUpdates); // Use set to overwrite all voter data
 
                 // Reset candidates
-                const candidatesSnapshot = await database.ref('candidates').once('value');
-                const candidates = candidatesSnapshot.val() || {};
-                const candidatesUpdates = {};
-                // Filter out "Wawan Oktriawan" when resetting candidates
-                const initialCandidatesForReset = [
-                    "Jumanto, S.T", "Adi Hermawan, S.T", "Ernawati, S.H",
-                    "Lyna Devy F., S.Pd", "Sukarsih, M.Pd", "Sri Wulan, S.Pd", "Nurul Wangsa M., S.Pd",
-                    "Priyo Wiji Utomo, S.Pd", "Sigit Ramdhani, S.T", "Kiki Putra, S.T", "Noval Ridho Pasyola, S.PdI",
-                    "Ellis Hayati, S.Pd", "Neng Leni, S.Kom", "Agt Eko Priyantono M.M", "Agustiar Tedjo Aspurwa, S.E",
-                    "M. Ridwan Hasibuan, S.H", "Indra Supriatna, S.Kom", "Nanda Faradhitta, A.Md", "Khaerunisa, S.Pd",
-                    "Muhammad Imron Aulia, S.P", "Enjang Seefullah, S.T", "M. Firdaus Z.S. Th.I", "Jepi Prasetyo Ahmad, S.Pd",
-                    "Nandi Hamadi S.Pd", "Jimmy Permana Wijaya, S.Si", "Ari Wibawa, S.T"
+                const initialCandidates = [
+                    "Jumanto, S.T", "Ernawati, S.H", "Lyna Devy F., S.Pd",
+                    "Sukarsih, M.Pd", "Sri Wulan, S.Pd", "Nurul Wangsa M., S.Pd",
+                    "Priyo Wiji Utomo, S.Pd", "Sigit Ramdhani, S.T", "Kiki Putra, S.T",
+                    "Noval Ridho Pasyola, S.PdI", "Ellis Hayati, S.Pd", "Neng Leni, S.Kom",
+                    "Agt Eko Priyantono M.M", "Agustiar Tedjo Aspurwa, S.E", "M. Ridwan Hasibuan, S.H",
+                    "Indra Supriatna, S.Kom", "Nanda Faradhitta, A.Md", "Khaerunisa, S.Pd",
+                    "Muhammad Imron Aulia, S.P", "Enjang Seefullah, S.T", "M. Firdaus Z.S. Th.I",
+                    "Jepi Prasetyo Ahmad, S.Pd", "Nandi Hamadi S.Pd", "Jimmy Permana Wijaya, S.Si",
+                    "E.Nurhayati", "Maria Ulfah, S.E", "Egi Febriansyah", "Roby Yusuf", "Sulaeman"
                 ];
-
-                initialCandidatesForReset.forEach((candidateName, index) => {
+                const candidatesUpdates = {};
+                initialCandidates.forEach((candidateName, index) => {
                     const candidateId = `candidate${index + 1}`;
                     candidatesUpdates[candidateId] = { name: candidateName, votes: 0 };
                 });
@@ -693,11 +839,14 @@
                 // Clear votes
                 await database.ref('votes').remove();
 
+                // Reset totalVotersCount
+                await database.ref('totalVotersCount').set(initialVoters.length);
+
                 showMessage('Semua data berhasil direset!', 'success');
                 updateDashboardData();
             } catch (error) {
                 console.error('Error resetting data:', error);
-                showMessage('Gagal mereset data', 'error');
+                showMessage('Gagal mereset data', 'danger');
             } finally {
                 hideLoading();
             }
@@ -711,7 +860,7 @@
                 (e.ctrlKey && e.shiftKey && e.key === 'J') ||
                 (e.ctrlKey && e.key === 'U')) {
                 e.preventDefault();
-                showMessage('Akses developer tools tidak diizinkan!', 'error');
+                showMessage('Akses developer tools tidak diizinkan!', 'danger');
             }
         });
 
